@@ -1,0 +1,6 @@
+package spread.ontology;
+
+message Annotation {
+  required bytes property = 1;
+  required string value = 2; // TODO: change to accept both IRI or literal
+}
