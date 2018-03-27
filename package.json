@@ -1,0 +1,26 @@
+{
+  "name": "spread-protocol",
+  "version": "1.0.0",
+  "description": "## Ontology Update Process",
+  "main": "index.js",
+  "scripts": {
+    "build": "node_modules/.bin/truffle compile",
+    "deploy": "node_modules/.bin/truffle migrate --reset",
+    "testnet": "node_modules/.bin/ganache-cli",
+    "test": "node_modules/.bin/truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spread-foundation/spread-protocol.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/spread-foundation/spread-protocol/issues"
+  },
+  "homepage": "https://github.com/spread-foundation/spread-protocol#readme",
+  "devDependencies": {
+    "ganache-cli": "^6.1.0",
+    "truffle": "^4.1.3"
+  }
+}

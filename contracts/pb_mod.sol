@@ -3,13 +3,16 @@ pragma solidity ^0.4.0;
 contract AnnotationStore {
   mapping (bytes32 => AnnotationCodec.Annotation) public annotations;
 
+  event AnnotationStored(bytes cid);
+
   function storeAnnotation(bytes property, string value) returns (bytes) {
     var ann = AnnotationCodec.Annotation(property, value);
     var hash = hashAnnotation(ann);
-    /* var cid = wrapInCid(hash); */
     annotations[hash] = ann;
 
-    return wrapInCid(hash);
+    var cid = wrapInCid(hash);
+    AnnotationStored(cid);
+    return cid;
   }
 
   function retrieveAnnotation(bytes cid) public constant returns (bytes, string) {
