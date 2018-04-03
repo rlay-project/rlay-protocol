@@ -23,7 +23,7 @@ contract('AnnotationStore', function(accounts) {
     });
   });
 
-  it.skip("should be able to check for an existing contract with retrieveAnnotationExists", function() {
+  it("should be able to check for an existing contract with retrieveAnnotationExists", function() {
     return AnnotationStore.deployed().then(function(instance) {
       return instance.storeAnnotation('0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511', 'Organization')
       .then(function(storeTx) {
@@ -35,7 +35,7 @@ contract('AnnotationStore', function(accounts) {
     });
   });
 
-  it.skip("should be able to check for a non-existing contract with retrieveAnnotationExists", function() {
+  it("should be able to check for a non-existing contract with retrieveAnnotationExists", function() {
     return AnnotationStore.deployed().then(function(instance) {
       return instance.storeAnnotation('0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511', 'Organization')
       .then(function(storeTx) {

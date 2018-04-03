@@ -26,12 +26,11 @@ contract AnnotationStore {
 
   function retrieveAnnotationExists(bytes cid) public view returns (bool exists) {
     bytes32 hash = unwrapCid(cid);
-    var ann = annotations[hash];
+    AnnotationCodec.Annotation memory ann = annotations[hash];
 
-    // TODO
-    assembly {
-      exists := and(sload(ann_slot), 0)
-    }
+    bytes32 propertyHash = unwrapCid(ann.property);
+    bytes32 defaultBytes;
+    return propertyHash != defaultBytes;
   }
 
   function calculateHashAnnotation(bytes property, string value) public view returns (bytes32) {
