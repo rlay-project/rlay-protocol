@@ -22,11 +22,14 @@ contract AnnotationStore {
     return (ann.property, ann.value);
   }
 
-  function retrieveAnnotationExists(bytes cid) public constant returns (bool) {
+  function retrieveAnnotationExists(bytes cid) public constant returns (bool exists) {
     bytes32 hash = unwrapCid(cid);
     var ann = annotations[hash];
 
-    return !AnnotationCodec.isNil(ann);
+    // TODO
+    assembly {
+      exists := and(sload(ann_slot), 0)
+    }
   }
 
   function calculateHashAnnotation(bytes property, string value) returns (bytes32) {

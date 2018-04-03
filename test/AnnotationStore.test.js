@@ -22,4 +22,27 @@ contract('AnnotationStore', function(accounts) {
       assert.equal('Organization', value);
     });
   });
+
+  it.skip("should be able to check for an existing contract with retrieveAnnotationExists", function() {
+    return AnnotationStore.deployed().then(function(instance) {
+      return instance.storeAnnotation('0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511', 'Organization')
+      .then(function(storeTx) {
+        const storedCid = storeTx.logs[0].args.cid;
+        return instance.retrieveAnnotationExists.call(storedCid);
+      });
+    }).then(function(annotationExists) {
+      assert.equal(true, annotationExists);
+    });
+  });
+
+  it.skip("should be able to check for a non-existing contract with retrieveAnnotationExists", function() {
+    return AnnotationStore.deployed().then(function(instance) {
+      return instance.storeAnnotation('0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511', 'Organization')
+      .then(function(storeTx) {
+        return instance.retrieveAnnotationExists.call('0x00');
+      });
+    }).then(function(annotationExists) {
+      assert.equal(false, annotationExists);
+    });
+  });
 });

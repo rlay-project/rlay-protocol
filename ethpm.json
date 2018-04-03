@@ -1,0 +1,11 @@
+{
+  "package_name": "spread-protocol",
+  "version": "0.0.1",
+  "description": "Spread protocol",
+  "authors": [],
+  "keywords": [],
+  "dependencies": {
+    "tokens": "^1.0.0"
+  },
+  "license": "MIT"
+}
