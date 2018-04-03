@@ -1,34 +1,35 @@
 pragma solidity ^0.4.19;
 
 import "./pb_mod.sol";
+import "./cid.sol";
 
-contract AnnotationStore {
+contract AnnotationStorage {
   mapping (bytes32 => AnnotationCodec.Annotation) public annotations;
 
-  event AnnotationStored(bytes cid);
+  event AnnotationStored(bytes _cid);
 
   function storeAnnotation(bytes property, string value) public returns (bytes) {
     var ann = AnnotationCodec.Annotation(property, value);
     var hash = hashAnnotation(ann);
     annotations[hash] = ann;
 
-    var cid = wrapInCid(hash);
-    AnnotationStored(cid);
-    return cid;
+    var annCid = cid.wrapInCid(cidPrefixAnnotation(), hash);
+    AnnotationStored(annCid);
+    return annCid;
   }
 
-  function retrieveAnnotation(bytes cid) public view returns (bytes, string) {
-    bytes32 hash = unwrapCid(cid);
+  function retrieveAnnotation(bytes annCid) public view returns (bytes, string) {
+    bytes32 hash = cid.unwrapCid(annCid);
     var ann = annotations[hash];
 
     return (ann.property, ann.value);
   }
 
-  function retrieveAnnotationExists(bytes cid) public view returns (bool exists) {
-    bytes32 hash = unwrapCid(cid);
+  function isStoredAnnotation(bytes annCid) public view returns (bool exists) {
+    bytes32 hash = cid.unwrapCid(annCid);
     AnnotationCodec.Annotation memory ann = annotations[hash];
 
-    bytes32 propertyHash = unwrapCid(ann.property);
+    bytes32 propertyHash = cid.unwrapCid(ann.property);
     bytes32 defaultBytes;
     return propertyHash != defaultBytes;
   }
@@ -41,38 +42,14 @@ contract AnnotationStore {
   function calculateCidAnnotation(bytes property, string value) public view returns (bytes) {
     var ann = AnnotationCodec.Annotation(property, value);
     var hash = hashAnnotation(ann);
-    return wrapInCid(hash);
+    return cid.wrapInCid(cidPrefixAnnotation(), hash);
   }
 
-  function cidPrefix() private pure returns (bytes5) {
+  function cidPrefixAnnotation() private pure returns (bytes5) {
     // annotation cid prefix
-    bytes5 cid = 0x01f0011b20;
+    bytes5 annCidPrefix = 0x01f0011b20;
 
-    return cid;
-  }
-
-  function wrapInCid(bytes32 hash) private pure returns (bytes) {
-    bytes memory cid = new bytes(37); // 32 bytes for hash + 5 for cid prefix
-
-    var cid_part = cidPrefix();
-    for(uint i=0; i<cid_part.length; i++) {
-      cid[i] = cid_part[i];
-    }
-    for(uint j=0; j<32; j++) {
-      cid[5+j] = hash[j];
-    }
-
-    return cid;
-  }
-
-  function unwrapCid(bytes cid) private pure returns (bytes32) {
-    bytes32 hash;
-    assembly {
-      mload(add(add(cid, 32), 5))
-      =: hash
-    }
-
-    return hash;
+    return annCidPrefix;
   }
 
   function hashAnnotation(AnnotationCodec.Annotation ann) private view returns (bytes32) {
@@ -82,4 +59,3 @@ contract AnnotationStore {
     return hash;
   }
 }
-
