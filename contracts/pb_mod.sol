@@ -24,34 +24,6 @@ pragma solidity ^0.4.0;
 //  the Commonwealth Bank of Australia.
 //----------------------------------------------------------------------
 
-
-/* library pb { */
-  /* struct Annotation { */
-    /* bytes property; */
-    /* string value; */
-  /* } */
-  /* function decodeAnnotation(bytes bs) internal constant returns(Annotation) { */
-    /* Annotation memory r; */
-    /* var x = AnnotationCodec.decode(bs); */
-    /* assembly { r := x } */
-    /* return r; */
-  /* } */
-  /* function encodeAnnotation(Annotation x) internal constant returns(bytes) { */
-    /* AnnotationCodec.Annotation memory xx; */
-    /* assembly { xx := x } */
-    /* return AnnotationCodec.encode(xx); */
-  /* } */
-  /* function storeAnnotation(Annotation memory input, Annotation storage output) */
-      /* internal constant { */
-    /* AnnotationCodec.Annotation memory input2; */
-    /* AnnotationCodec.Annotation storage output2; */
-    /* assembly { */
-      /* input2 := input */
-      /* output2 := output */
-    /* } */
-    /* return AnnotationCodec.store(input2, output2); */
-  /* } */
-/* } */
 library AnnotationCodec {
   struct Annotation {
     bytes property;
@@ -157,6 +129,232 @@ library AnnotationCodec {
     assembly { r := 0 }
   }
   function isNil(Annotation x) internal constant returns (bool r) {
+    assembly { r := iszero(x) }
+  }
+}
+library ClassCodec {
+  struct Class {
+    bytes[] annotations;
+    bytes[] sub_class_of_class;
+  }
+  // Decoder section
+
+  function decode(bytes bs) internal constant returns (Class) {
+    var (x,) = _decode(32, bs, bs.length);
+    return x;
+  }
+
+  function _decode(uint p, bytes bs, uint sz)
+      internal constant returns (Class, uint) {
+    Class memory r;
+    uint[2] memory counters;
+    uint fieldId;
+    _pb.WireType wireType;
+    uint bytesRead;
+    uint offset = p;
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, nil(), counters);
+      else if(fieldId == 2)
+        p += _read_sub_class_of_class(p, bs, nil(), counters);
+      else throw;
+    }
+    p = offset;
+    r.annotations = new bytes[](counters[0]);
+    r.sub_class_of_class = new bytes[](counters[1]);
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, r, counters);
+      else if(fieldId == 2)
+        p += _read_sub_class_of_class(p, bs, r, counters);
+      else throw;
+    }
+    return (r, sz);
+  }
+
+  function _read_annotations(uint p, bytes bs, Class r, uint[2] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[0] += 1;
+    } else {
+      r.annotations[ r.annotations.length - counters[0] ] = x;
+      if(counters[0] > 0) counters[0] -= 1;
+    }
+    return sz;
+  }
+  function _read_sub_class_of_class(uint p, bytes bs, Class r, uint[2] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[1] += 1;
+    } else {
+      r.sub_class_of_class[ r.sub_class_of_class.length - counters[1] ] = x;
+      if(counters[1] > 0) counters[1] -= 1;
+    }
+    return sz;
+  }
+  // Encoder section
+
+  function encode(Class r) internal constant returns (bytes) {
+    bytes memory bs = new bytes(_estimate(r));
+    uint sz = _encode(r, 32, bs);
+    assembly { mstore(bs, sz) }
+    return bs;
+  }
+  function _encode(Class r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) {
+      p += _pb._encode_key(1, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.annotations[i], p, bs);
+    }
+    for(i=0; i<r.sub_class_of_class.length; i++) {
+      p += _pb._encode_key(2, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.sub_class_of_class[i], p, bs);
+    }
+    return p - offset;
+  }
+  function _encode_nested(Class r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    p += _pb._encode_varint(_estimate(r), p, bs);
+    p += _encode(r, p, bs);
+    return p - offset;
+  }
+  function _estimate(Class r) internal constant returns (uint) {
+    uint e;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) e+= 1 + _pb._sz_lendelim(r.annotations[i].length);
+    for(i=0; i<r.sub_class_of_class.length; i++) e+= 1 + _pb._sz_lendelim(r.sub_class_of_class[i].length);
+    return e;
+  }
+  function store(Class memory input, Class storage output) internal {
+    output.annotations = input.annotations;
+    output.sub_class_of_class = input.sub_class_of_class;
+  }
+  function nil() internal constant returns (Class r) {
+    assembly { r := 0 }
+  }
+  function isNil(Class x) internal constant returns (bool r) {
+    assembly { r := iszero(x) }
+  }
+}
+library IndividualCodec {
+  struct Individual {
+    bytes[] annotations;
+    bytes[] class_assertions;
+  }
+  // Decoder section
+
+  function decode(bytes bs) internal constant returns (Individual) {
+    var (x,) = _decode(32, bs, bs.length);
+    return x;
+  }
+
+  function _decode(uint p, bytes bs, uint sz)
+      internal constant returns (Individual, uint) {
+    Individual memory r;
+    uint[2] memory counters;
+    uint fieldId;
+    _pb.WireType wireType;
+    uint bytesRead;
+    uint offset = p;
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, nil(), counters);
+      else if(fieldId == 2)
+        p += _read_class_assertions(p, bs, nil(), counters);
+      else throw;
+    }
+    p = offset;
+    r.annotations = new bytes[](counters[0]);
+    r.class_assertions = new bytes[](counters[1]);
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, r, counters);
+      else if(fieldId == 2)
+        p += _read_class_assertions(p, bs, r, counters);
+      else throw;
+    }
+    return (r, sz);
+  }
+
+  function _read_annotations(uint p, bytes bs, Individual r, uint[2] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[0] += 1;
+    } else {
+      r.annotations[ r.annotations.length - counters[0] ] = x;
+      if(counters[0] > 0) counters[0] -= 1;
+    }
+    return sz;
+  }
+  function _read_class_assertions(uint p, bytes bs, Individual r, uint[2] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[1] += 1;
+    } else {
+      r.class_assertions[ r.class_assertions.length - counters[1] ] = x;
+      if(counters[1] > 0) counters[1] -= 1;
+    }
+    return sz;
+  }
+  // Encoder section
+
+  function encode(Individual r) internal constant returns (bytes) {
+    bytes memory bs = new bytes(_estimate(r));
+    uint sz = _encode(r, 32, bs);
+    assembly { mstore(bs, sz) }
+    return bs;
+  }
+  function _encode(Individual r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) {
+      p += _pb._encode_key(1, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.annotations[i], p, bs);
+    }
+    for(i=0; i<r.class_assertions.length; i++) {
+      p += _pb._encode_key(2, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.class_assertions[i], p, bs);
+    }
+    return p - offset;
+  }
+  function _encode_nested(Individual r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    p += _pb._encode_varint(_estimate(r), p, bs);
+    p += _encode(r, p, bs);
+    return p - offset;
+  }
+  function _estimate(Individual r) internal constant returns (uint) {
+    uint e;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) e+= 1 + _pb._sz_lendelim(r.annotations[i].length);
+    for(i=0; i<r.class_assertions.length; i++) e+= 1 + _pb._sz_lendelim(r.class_assertions[i].length);
+    return e;
+  }
+  function store(Individual memory input, Individual storage output) internal {
+    output.annotations = input.annotations;
+    output.class_assertions = input.class_assertions;
+  }
+  function nil() internal constant returns (Individual r) {
+    assembly { r := 0 }
+  }
+  function isNil(Individual x) internal constant returns (bool r) {
     assembly { r := iszero(x) }
   }
 }

@@ -1,6 +1,18 @@
+syntax = "proto2";
+
 package spread.ontology;
 
 message Annotation {
   required bytes property = 1;
   required string value = 2; // TODO: change to accept both IRI or literal
+}
+
+message Class {
+  repeated bytes annotations = 1;
+  repeated bytes sub_class_of_class = 2;
+}
+
+message Individual {
+  repeated bytes annotations = 1;
+  repeated bytes class_assertions = 2;
 }
