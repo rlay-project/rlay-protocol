@@ -3,11 +3,11 @@ var SpreadToken = artifacts.require("./SpreadToken");
 var PropositionLedger = artifacts.require("./PropositionLedger");
 
 module.exports = function(deployer) {
-  var annotationStoreDeployed = deployer.deploy(OntologyStorage);
+  var ontologyStorageDeployed = deployer.deploy(OntologyStorage);
   var tokenDeployed = deployer.deploy(SpreadToken);
 
-  Promise.all([annotationStoreDeployed, tokenDeployed])
-    .then(() => {
-      deployer.deploy(PropositionLedger, SpreadToken.address, OntologyStorage.address);
+  return Promise.all([ontologyStorageDeployed, tokenDeployed])
+    .then(([ontologyContract, tokenContract]) => {
+      return deployer.deploy(PropositionLedger, SpreadToken.address, OntologyStorage.address);
     });
 };

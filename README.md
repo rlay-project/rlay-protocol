@@ -1,5 +1,17 @@
 # Spread-protocol - Implementation of the Spread protocol in Solidity
 
+## Setup
+
+- Make sure you have NPM installed.
+- `npm install`
+
+## Running tests
+
+In seperate terminal windows run:
+
+- `npm run testnet`
+- `npm run test`
+
 ## Ontology Update Process
 
 In order to update to a newer version of `ontology.proto` you need to do the following steps:

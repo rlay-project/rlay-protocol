@@ -1,22 +1,33 @@
 pragma solidity ^0.4.21;
 pragma experimental ABIEncoderV2;
 
-import "./pb_mod.sol";
 import "./cid.sol";
+import "./pb_mod.sol";
+import './IPropositionStorage.sol';
 
-contract OntologyStorage {
+/// @notice The OntologyStorage keeps track of all the ontological entities required to construct propositions, and the propositions themselves.
+// The structure for each of the entities is very similar:
+//
+// store<Entity> function: Stores the entity, in the process checking its wellformedness. Returns the CID, under which it can later be retrieved and referenced.
+// retrieve<Entity> function: Retrieve entity by its CID.
+// isStored<Entity> function: Checks if an entity is stored by its CID.
+// calculateCid<Entity> function: Calculate the CID of an entity.
+// cidPrefix<Entity> function: Returns the CID prefix for an entity, which can be used to find out the type of entity.
+// hashCid<Entity> function: Hash the entity, producing the latter part of the CID.
+// checkDependenciesAreStored<Entity> function: Check if all the CIDs that are referenced in the entity are already stored in the contract.
+// <Entity>Stored event: Is emitted when `store<Entity>` is called successfully.
+contract OntologyStorage is IPropositionStorage {
   mapping (bytes32 => AnnotationCodec.Annotation) private annotations;
   mapping (bytes32 => ClassCodec.Class) private classes;
-  // mapping (bytes32 => IndividualCodec.Individual) public individuals;
+  mapping (bytes32 => IndividualCodec.Individual) private individuals;
 
   event AnnotationStored(bytes _cid);
   event ClassStored(bytes _cid);
-  // event IndividualStored(bytes _cid);
-  event Debug(string msg);
+  event IndividualStored(bytes _cid);
 
-  ///
-  /// Annotation
-  ///
+  //
+  // Annotation
+  //
 
   function storeAnnotation(bytes property, string value) public returns (bytes) {
     var ann = AnnotationCodec.Annotation(property, value);
@@ -67,9 +78,9 @@ contract OntologyStorage {
     return hash;
   }
 
-  ///
-  /// Class
-  ///
+  //
+  // Class
+  //
 
   // HACK: It appears that there are some bugs when it comes to passing in bytes[],
   // so for now we are restricted to a single annotation and sub_class_of_class.
@@ -105,8 +116,6 @@ contract OntologyStorage {
         return false;
       }
     }
-
-    // TODO: check sub_class_of_class
 
     return true;
   }
@@ -163,58 +172,104 @@ contract OntologyStorage {
     return hash;
   }
 
-  ///
-  /// Individual
-  ///
+  //
+  // Individual
+  //
 
-  // function storeIndividual(bytes property, string value) public returns (bytes) {
-    // var ann = IndividualCodec.Individual(property, value);
-    // var hash = hashIndividual(ann);
-    // annotations[hash] = ann;
+  // HACK: It appears that there are some bugs when it comes to passing in bytes[],
+  // so for now we are restricted to a single annotation and class_assertions.
+  function buildSimpleIndividual(bytes _annotations, bytes _class_assertions) internal view returns (IndividualCodec.Individual) {
 
-    // var annCid = cid.wrapInCid(cidPrefixIndividual(), hash);
-    // IndividualStored(annCid);
-    // return annCid;
-  // }
+    bytes[] memory __annotations = new bytes[](0);
+    if (cid.getPrefix(_annotations) == cidPrefixAnnotation()) {
+      __annotations = new bytes[](1);
+      __annotations[0] = _annotations;
+    }
 
-  // function retrieveIndividual(bytes annCid) public view returns (bytes, string) {
-    // bytes32 hash = cid.unwrapCid(annCid);
-    // var ann = annotations[hash];
+    bytes[] memory __class_assertions = new bytes[](0);
+    if (cid.getPrefix(_class_assertions) == cidPrefixClass()) {
+      __class_assertions = new bytes[](1);
+      __class_assertions[0] = _class_assertions;
+    }
 
-    // return (ann.property, ann.value);
-  // }
+    var ind = IndividualCodec.Individual(__annotations, __class_assertions);
+    return ind;
+  }
 
-  // function isStoredIndividual(bytes annCid) public view returns (bool exists) {
-    // bytes32 hash = cid.unwrapCid(annCid);
-    // IndividualCodec.Individual memory ann = annotations[hash];
+  function checkDependenciesAreStoredIndividual(IndividualCodec.Individual ind) internal view returns (bool) {
+    for (uint i = 0; i < ind.annotations.length; i++) {
+      var annotationCid = ind.annotations[i];
+      if (!isStoredAnnotation(annotationCid)) {
+        return false;
+      }
+    }
 
-    // bytes32 propertyHash = cid.unwrapCid(ann.property);
-    // bytes32 defaultBytes;
-    // return propertyHash != defaultBytes;
-  // }
+    for (uint j = 0; j < ind.class_assertions.length; j++) {
+      var classCid = ind.class_assertions[i];
+      if (!isStoredClass(classCid)) {
+        return false;
+      }
+    }
 
-  // function calculateHashIndividual(bytes property, string value) public view returns (bytes32) {
-    // var ann = IndividualCodec.Individual(property, value);
-    // return hashIndividual(ann);
-  // }
+    return true;
+  }
 
-  // function calculateCidIndividual(bytes property, string value) public view returns (bytes) {
-    // var ann = IndividualCodec.Individual(property, value);
-    // var hash = hashIndividual(ann);
-    // return cid.wrapInCid(cidPrefixIndividual(), hash);
-  // }
+  function storeIndividual(bytes _annotations, bytes _class_assertions) public returns (bytes) {
+    var ind = buildSimpleIndividual(_annotations, _class_assertions);
+    require(checkDependenciesAreStoredIndividual(ind));
+    var hash = hashIndividual(ind);
+    individuals[hash] = ind;
 
-  // function cidPrefixIndividual() private pure returns (bytes5) {
-    // // annotation cid prefix
-    // bytes5 annCidPrefix = 0x01f0011b20;
+    var indCid = cid.wrapInCid(cidPrefixIndividual(), hash);
+    emit IndividualStored(indCid);
+    return indCid;
+  }
 
-    // return annCidPrefix;
-  // }
+  function retrieveIndividual(bytes indCid) public view returns (bytes[], bytes[]) {
+    bytes32 hash = cid.unwrapCid(indCid);
+    var ind = individuals[hash];
 
-  // function hashIndividual(IndividualCodec.Individual ann) private view returns (bytes32) {
-    // var enc = IndividualCodec.encode(ann);
-    // var hash = keccak256(enc);
+    return (ind.annotations, ind.class_assertions);
+  }
 
-    // return hash;
-  // }
+  function isStoredIndividual(bytes indCid) public view returns (bool exists) {
+    bytes32 hash = cid.unwrapCid(indCid);
+    IndividualCodec.Individual memory ind = individuals[hash];
+
+    if (ind.annotations.length == 0 && ind.class_assertions.length == 0) {
+      return false;
+    }
+    return true;
+  }
+
+  function calculateHashIndividual(bytes _annotations, bytes _class_assertions) public view returns (bytes32) {
+    var ind = buildSimpleIndividual(_annotations, _class_assertions);
+    return hashIndividual(ind);
+  }
+
+  function calculateCidIndividual(bytes _annotations, bytes _class_assertions) public view returns (bytes) {
+    var ind = buildSimpleIndividual(_annotations, _class_assertions);
+    var hash = hashIndividual(ind);
+    return cid.wrapInCid(cidPrefixIndividual(), hash);
+  }
+
+  function cidPrefixIndividual() private pure returns (bytes5) {
+    bytes5 cidPrefix = 0x01f2011b20;
+    return cidPrefix;
+  }
+
+  function hashIndividual(IndividualCodec.Individual ind) private view returns (bytes32) {
+    var enc = IndividualCodec.encode(ind);
+    var hash = keccak256(enc);
+
+    return hash;
+  }
+
+  //
+  // Interface: IPropositionStorage
+  //
+
+  function isPropositionStored(bytes proposition) public view returns (bool stored) {
+    return isStoredIndividual(proposition);
+  }
 }

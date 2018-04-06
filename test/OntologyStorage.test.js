@@ -1,8 +1,8 @@
 var OntologyStorage = artifacts.require("./OntologyStorage.sol");
 
-contract('OntologyStorage', function(accounts) {
-  describe('Annotation', function() {
-    it("should hash 'Organization' label annotation correctly", function() {
+contract('OntologyStorage', (accounts) => {
+  describe('Annotation', () => {
+    it("should hash 'Organization' label annotation correctly", () => {
       return OntologyStorage.deployed().then(function(instance) {
         return instance.calculateCidAnnotation.call('0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511', 'Organization');
       }).then(function(calculatedCid) {
@@ -10,7 +10,7 @@ contract('OntologyStorage', function(accounts) {
       });
     });
 
-    it("should be able to retrieve stored Annotation", function() {
+    it("should be able to retrieve stored Annotation", () => {
       return OntologyStorage.deployed().then(function(instance) {
         return instance.storeAnnotation('0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511', 'Organization')
         .then(function(storeTx) {
@@ -24,7 +24,7 @@ contract('OntologyStorage', function(accounts) {
       });
     });
 
-    it("should be able to check for an existing contract with isStoredAnnotation", function() {
+    it("should be able to check for an existing contract with isStoredAnnotation", () => {
       return OntologyStorage.deployed().then(function(instance) {
         return instance.storeAnnotation('0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511', 'Organization')
         .then(function(storeTx) {
@@ -36,7 +36,7 @@ contract('OntologyStorage', function(accounts) {
       });
     });
 
-    it("should be able to check for a non-existing contract with isStoredAnnotation", function() {
+    it("should be able to check for a non-existing contract with isStoredAnnotation", () => {
       return OntologyStorage.deployed().then(function(instance) {
         return instance.storeAnnotation('0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511', 'Organization')
         .then(function(storeTx) {
@@ -48,8 +48,8 @@ contract('OntologyStorage', function(accounts) {
     });
   });
 
-  describe('Class', function() {
-    it("should hash class with 'Organization' label annotation correctly", function() {
+  describe('Class', () => {
+    it("should hash class with 'Organization' label annotation correctly", () => {
       return OntologyStorage.deployed().then(function(instance) {
         return instance.calculateCidClass.call('0x01f0011b2003b86a4b4fb1f1dce175d2d13e2fe026a43cf522d5880c5936b2b2db7e915aac', '0x00000000000000000000000000000000');
       }).then((calculatedCid) => {
@@ -57,7 +57,7 @@ contract('OntologyStorage', function(accounts) {
       });
     });
 
-    it("should hash class with sub_class_of_class correctly", function() {
+    it("should hash class with sub_class_of_class correctly", () => {
       return OntologyStorage.deployed().then(function(instance) {
         return instance.calculateCidClass.call('0x00000000000000000000000000000000', '0x01f1011b20f876cf456acb9c77b674d1ded27d6bf97d65dd1a772864a53613f9b3643f5ee7');
       }).then((calculatedCid) => {
