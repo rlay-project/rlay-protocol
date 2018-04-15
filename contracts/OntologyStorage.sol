@@ -111,7 +111,7 @@ contract OntologyStorage is IPropositionStorage {
     }
 
     for (uint j = 0; j < klass.sub_class_of_class.length; j++) {
-      var classCid = klass.sub_class_of_class[i];
+      var classCid = klass.sub_class_of_class[j];
       if (!isStoredClass(classCid)) {
         return false;
       }
@@ -205,7 +205,7 @@ contract OntologyStorage is IPropositionStorage {
     }
 
     for (uint j = 0; j < ind.class_assertions.length; j++) {
-      var classCid = ind.class_assertions[i];
+      var classCid = ind.class_assertions[j];
       if (!isStoredClass(classCid)) {
         return false;
       }
