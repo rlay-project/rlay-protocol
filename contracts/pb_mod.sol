@@ -249,6 +249,7 @@ library IndividualCodec {
   struct Individual {
     bytes[] annotations;
     bytes[] class_assertions;
+    bytes[] negative_class_assertions;
   }
   // Decoder section
 
@@ -260,7 +261,7 @@ library IndividualCodec {
   function _decode(uint p, bytes bs, uint sz)
       internal constant returns (Individual, uint) {
     Individual memory r;
-    uint[2] memory counters;
+    uint[3] memory counters;
     uint fieldId;
     _pb.WireType wireType;
     uint bytesRead;
@@ -272,11 +273,14 @@ library IndividualCodec {
         p += _read_annotations(p, bs, nil(), counters);
       else if(fieldId == 2)
         p += _read_class_assertions(p, bs, nil(), counters);
+      else if(fieldId == 3)
+        p += _read_negative_class_assertions(p, bs, nil(), counters);
       else throw;
     }
     p = offset;
     r.annotations = new bytes[](counters[0]);
     r.class_assertions = new bytes[](counters[1]);
+    r.negative_class_assertions = new bytes[](counters[2]);
     while(p < offset+sz) {
       (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
       p += bytesRead;
@@ -284,12 +288,14 @@ library IndividualCodec {
         p += _read_annotations(p, bs, r, counters);
       else if(fieldId == 2)
         p += _read_class_assertions(p, bs, r, counters);
+      else if(fieldId == 3)
+        p += _read_negative_class_assertions(p, bs, r, counters);
       else throw;
     }
     return (r, sz);
   }
 
-  function _read_annotations(uint p, bytes bs, Individual r, uint[2] counters)
+  function _read_annotations(uint p, bytes bs, Individual r, uint[3] counters)
       internal constant returns (uint) {
     var (x, sz) = _pb._decode_bytes(p, bs);
     if(isNil(r)) {
@@ -300,7 +306,7 @@ library IndividualCodec {
     }
     return sz;
   }
-  function _read_class_assertions(uint p, bytes bs, Individual r, uint[2] counters)
+  function _read_class_assertions(uint p, bytes bs, Individual r, uint[3] counters)
       internal constant returns (uint) {
     var (x, sz) = _pb._decode_bytes(p, bs);
     if(isNil(r)) {
@@ -308,6 +314,17 @@ library IndividualCodec {
     } else {
       r.class_assertions[ r.class_assertions.length - counters[1] ] = x;
       if(counters[1] > 0) counters[1] -= 1;
+    }
+    return sz;
+  }
+  function _read_negative_class_assertions(uint p, bytes bs, Individual r, uint[3] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[2] += 1;
+    } else {
+      r.negative_class_assertions[ r.negative_class_assertions.length - counters[2] ] = x;
+      if(counters[2] > 0) counters[2] -= 1;
     }
     return sz;
   }
@@ -331,6 +348,10 @@ library IndividualCodec {
       p += _pb._encode_key(2, _pb.WireType.LengthDelim, p, bs);
       p += _pb._encode_bytes(r.class_assertions[i], p, bs);
     }
+    for(i=0; i<r.negative_class_assertions.length; i++) {
+      p += _pb._encode_key(3, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.negative_class_assertions[i], p, bs);
+    }
     return p - offset;
   }
   function _encode_nested(Individual r, uint p, bytes bs)
@@ -345,11 +366,13 @@ library IndividualCodec {
     uint i;
     for(i=0; i<r.annotations.length; i++) e+= 1 + _pb._sz_lendelim(r.annotations[i].length);
     for(i=0; i<r.class_assertions.length; i++) e+= 1 + _pb._sz_lendelim(r.class_assertions[i].length);
+    for(i=0; i<r.negative_class_assertions.length; i++) e+= 1 + _pb._sz_lendelim(r.negative_class_assertions[i].length);
     return e;
   }
   function store(Individual memory input, Individual storage output) internal {
     output.annotations = input.annotations;
     output.class_assertions = input.class_assertions;
+    output.negative_class_assertions = input.negative_class_assertions;
   }
   function nil() internal constant returns (Individual r) {
     assembly { r := 0 }

@@ -178,7 +178,7 @@ contract OntologyStorage is IPropositionStorage {
 
   // HACK: It appears that there are some bugs when it comes to passing in bytes[],
   // so for now we are restricted to a single annotation and class_assertions.
-  function buildSimpleIndividual(bytes _annotations, bytes _class_assertions) internal view returns (IndividualCodec.Individual) {
+  function buildSimpleIndividual(bytes _annotations, bytes _class_assertions, bytes _negative_class_assertions) internal view returns (IndividualCodec.Individual) {
 
     bytes[] memory __annotations = new bytes[](0);
     if (cid.getPrefix(_annotations) == cidPrefixAnnotation()) {
@@ -192,7 +192,13 @@ contract OntologyStorage is IPropositionStorage {
       __class_assertions[0] = _class_assertions;
     }
 
-    var ind = IndividualCodec.Individual(__annotations, __class_assertions);
+    bytes[] memory __negative_class_assertions = new bytes[](0);
+    if (cid.getPrefix(_negative_class_assertions) == cidPrefixClass()) {
+      __negative_class_assertions = new bytes[](1);
+      __negative_class_assertions[0] = _negative_class_assertions;
+    }
+
+    var ind = IndividualCodec.Individual(__annotations, __class_assertions, __negative_class_assertions);
     return ind;
   }
 
@@ -211,11 +217,18 @@ contract OntologyStorage is IPropositionStorage {
       }
     }
 
+    for (uint k = 0; k < ind.negative_class_assertions.length; k++) {
+      var classCid2 = ind.negative_class_assertions[k];
+      if (!isStoredClass(classCid2)) {
+        return false;
+      }
+    }
+
     return true;
   }
 
-  function storeIndividual(bytes _annotations, bytes _class_assertions) public returns (bytes) {
-    var ind = buildSimpleIndividual(_annotations, _class_assertions);
+  function storeIndividual(bytes _annotations, bytes _class_assertions, bytes _negative_class_assertions) public returns (bytes) {
+    var ind = buildSimpleIndividual(_annotations, _class_assertions, _negative_class_assertions);
     require(checkDependenciesAreStoredIndividual(ind));
     var hash = hashIndividual(ind);
     individuals[hash] = ind;
@@ -225,11 +238,11 @@ contract OntologyStorage is IPropositionStorage {
     return indCid;
   }
 
-  function retrieveIndividual(bytes indCid) public view returns (bytes[], bytes[]) {
+  function retrieveIndividual(bytes indCid) public view returns (bytes[], bytes[], bytes[]) {
     bytes32 hash = cid.unwrapCid(indCid);
     var ind = individuals[hash];
 
-    return (ind.annotations, ind.class_assertions);
+    return (ind.annotations, ind.class_assertions, ind.negative_class_assertions);
   }
 
   function isStoredIndividual(bytes indCid) public view returns (bool exists) {
@@ -242,13 +255,13 @@ contract OntologyStorage is IPropositionStorage {
     return true;
   }
 
-  function calculateHashIndividual(bytes _annotations, bytes _class_assertions) public view returns (bytes32) {
-    var ind = buildSimpleIndividual(_annotations, _class_assertions);
+  function calculateHashIndividual(bytes _annotations, bytes _class_assertions, bytes _negative_class_assertions) public view returns (bytes32) {
+    var ind = buildSimpleIndividual(_annotations, _class_assertions, _negative_class_assertions);
     return hashIndividual(ind);
   }
 
-  function calculateCidIndividual(bytes _annotations, bytes _class_assertions) public view returns (bytes) {
-    var ind = buildSimpleIndividual(_annotations, _class_assertions);
+  function calculateCidIndividual(bytes _annotations, bytes _class_assertions, bytes _negative_class_assertions) public view returns (bytes) {
+    var ind = buildSimpleIndividual(_annotations, _class_assertions, _negative_class_assertions);
     var hash = hashIndividual(ind);
     return cid.wrapInCid(cidPrefixIndividual(), hash);
   }

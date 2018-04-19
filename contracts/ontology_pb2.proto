@@ -15,4 +15,5 @@ message Class {
 message Individual {
   repeated bytes annotations = 1;
   repeated bytes class_assertions = 2;
+  repeated bytes negative_class_assertions = 3;
 }
