@@ -182,6 +182,30 @@ contract("OntologyStorage", accounts => {
         });
     });
 
+    it("should store class with two annotations", () => {
+      return callEthersFunction(contract, provider, "storeAnnotation", [
+        "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
+        "Organization"
+      ])
+        .then(([annotationCid]) =>
+          callEthersFunction(contract, provider, "storeAnnotation", [
+            "0x16205d0fc86150f33d3628e636ee87cdf73abb9354dbdf2c541001d02fd4c219d7d5",
+            "A group of people consciously cooperating"
+          ]).then(([annotationCid2]) =>
+            callEthersFunction(contract, provider, "storeClass", [
+              [annotationCid, annotationCid2],
+              []
+            ])
+          )
+        )
+        .then(([storedCid]) => {
+          assert.equal(
+            "0x01f1011b20ef11ab42b1ec199b64cc64aa6e76572689d4259a89d5d7df90c6158c2ea8545e",
+            storedCid
+          );
+        });
+    });
+
     it("should store class with existing annotation and sub_class_of_class", () => {
       return callEthersFunction(contract, provider, "storeAnnotation", [
         "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
@@ -254,6 +278,33 @@ contract("OntologyStorage", accounts => {
           assert.equal(
             "0x01f0011b2003b86a4b4fb1f1dce175d2d13e2fe026a43cf522d5880c5936b2b2db7e915aac",
             classParts[0][0]
+          );
+        });
+    });
+  });
+
+  describe("Individual", () => {
+    it("should store individual with existing annotation and class", () => {
+      return callEthersFunction(contract, provider, "storeAnnotation", [
+        "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
+        "Organization"
+      ])
+        .then(([annotationCid]) =>
+          callEthersFunction(contract, provider, "storeClass", [
+            [annotationCid],
+            []
+          ]).then(([classCid]) =>
+            callEthersFunction(contract, provider, "storeIndividual", [
+              [annotationCid],
+              [classCid],
+              []
+            ])
+          )
+        )
+        .then(([storedCid]) => {
+          assert.equal(
+            "0x01f2011b20e2f20e112dd2f43883caf321672fcf700448d8c9bf9920ab3ee70aa7b41c1c8f",
+            storedCid
           );
         });
     });

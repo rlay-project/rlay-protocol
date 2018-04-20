@@ -21,7 +21,7 @@ var buildEthersContract = (address, accounts) => {
 
 var callEthersFunction = (contract, provider, fnName, args) => {
   return contract[fnName](...args)
-    .then(res => provider.getTransactionReceipt(res.hash))
+    .then(res => contract.provider.getTransactionReceipt(res.hash))
     .then(res =>
       contract.interface.functions[fnName].parseResult(res.logs[0].data)
     );
