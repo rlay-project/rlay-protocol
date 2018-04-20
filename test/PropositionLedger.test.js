@@ -1,10 +1,38 @@
+var ethers = require("ethers");
 var OntologyStorage = artifacts.require("./OntologyStorage");
 var PropositionLedger = artifacts.require("./PropositionLedger");
 var SpreadToken = artifacts.require("./SpreadToken");
 
 const nullValue = "0x00000000000000000000000000000000";
 
+var buildEthersContract = (address, accounts) => {
+  const abi = OntologyStorage.abi;
+  const privateKey =
+    "0x1c1a965a9fb6beb254bafa72588797b0268f43783cffbfa41659f47ae77a3529";
+  const provider = new ethers.providers.JsonRpcProvider();
+  const wallet = new ethers.Wallet(privateKey, provider);
+  const contract = new ethers.Contract(address, abi, wallet);
+
+  return {
+    contract: contract,
+    provider: provider
+  };
+};
+
+var callEthersFunction = (contract, provider, fnName, args) => {
+  return contract[fnName](...args)
+    .then(res => contract.provider.getTransactionReceipt(res.hash))
+    .then(res =>
+      contract.interface.functions[fnName].parseResult(res.logs[0].data)
+    );
+};
+
 contract("PropositionLedger", accounts => {
+  const { contract, provider } = buildEthersContract(
+    OntologyStorage.address,
+    accounts
+  );
+
   it("should be able to submit a proposition", () => {
     const tokenContractDeployed = SpreadToken.deployed();
     const ontologyContractDeployed = OntologyStorage.deployed();
@@ -31,25 +59,22 @@ contract("PropositionLedger", accounts => {
               return storedCid;
             })
             .then(annotationCid => {
-              return ontologyContract.storeClass(annotationCid, nullValue);
-            })
-            .then(storeClassTx => {
-              const storedCid = storeClassTx.logs[0].args._cid;
-              return storedCid;
-            })
-            .then(classCid => {
-              return ontologyContract.storeIndividual(
-                nullValue,
-                classCid,
-                nullValue
+              const class_stored = callEthersFunction(
+                contract,
+                provider,
+                "storeClass",
+                [[annotationCid], []]
               );
-            })
-            .then(storeIndividualTx => {
-              const storedCid = storeIndividualTx.logs[0].args._cid;
-              return storedCid;
+              return class_stored.then(([classCid]) =>
+                callEthersFunction(contract, provider, "storeIndividual", [
+                  [],
+                  [classCid],
+                  []
+                ])
+              );
             });
         })
-        .then(propositionCid => {
+        .then(([propositionCid]) => {
           return propositionLedgerContract.submitProposition(
             propositionCid,
             10,
@@ -85,25 +110,22 @@ contract("PropositionLedger", accounts => {
               return storedCid;
             })
             .then(annotationCid => {
-              return ontologyContract.storeClass(annotationCid, nullValue);
-            })
-            .then(storeClassTx => {
-              const storedCid = storeClassTx.logs[0].args._cid;
-              return storedCid;
-            })
-            .then(classCid => {
-              return ontologyContract.storeIndividual(
-                nullValue,
-                classCid,
-                nullValue
+              const class_stored = callEthersFunction(
+                contract,
+                provider,
+                "storeClass",
+                [[annotationCid], []]
               );
-            })
-            .then(storeIndividualTx => {
-              const storedCid = storeIndividualTx.logs[0].args._cid;
-              return storedCid;
+              return class_stored.then(([classCid]) =>
+                callEthersFunction(contract, provider, "storeIndividual", [
+                  [],
+                  [classCid],
+                  []
+                ])
+              );
             });
         })
-        .then(propositionCid => {
+        .then(([propositionCid]) => {
           return propositionLedgerContract
             .submitProposition(propositionCid, 999999, { from: accounts[0] })
             .catch(err => {

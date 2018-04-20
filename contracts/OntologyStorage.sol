@@ -82,26 +82,6 @@ contract OntologyStorage is IPropositionStorage {
   // Class
   //
 
-  // HACK: It appears that there are some bugs when it comes to passing in bytes[],
-  // so for now we are restricted to a single annotation and sub_class_of_class.
-  function buildSimpleClass(bytes _annotations, bytes sub_class_of_class) internal view returns (ClassCodec.Class) {
-
-    bytes[] memory __annotations = new bytes[](0);
-    if (cid.getPrefix(_annotations) == cidPrefixAnnotation()) {
-      __annotations = new bytes[](1);
-      __annotations[0] = _annotations;
-    }
-
-    bytes[] memory __sub_class_of_class = new bytes[](0);
-    if (cid.getPrefix(sub_class_of_class) == cidPrefixClass()) {
-      __sub_class_of_class = new bytes[](1);
-      __sub_class_of_class[0] = sub_class_of_class;
-    }
-
-    var klass = ClassCodec.Class(__annotations, __sub_class_of_class);
-    return klass;
-  }
-
   function checkDependenciesAreStoredClass(ClassCodec.Class klass) internal view returns (bool) {
     for (uint i = 0; i < klass.annotations.length; i++) {
       var annotationCid = klass.annotations[i];
@@ -120,8 +100,8 @@ contract OntologyStorage is IPropositionStorage {
     return true;
   }
 
-  function storeClass(bytes _annotations, bytes sub_class_of_class) public returns (bytes) {
-    var klass = buildSimpleClass(_annotations, sub_class_of_class);
+  function storeClass(bytes[] _annotations, bytes[] sub_class_of_class) public returns (bytes) {
+    var klass = ClassCodec.Class(_annotations, sub_class_of_class);
     require(checkDependenciesAreStoredClass(klass));
     var hash = hashClass(klass);
 
@@ -149,13 +129,13 @@ contract OntologyStorage is IPropositionStorage {
     return true;
   }
 
-  function calculateHashClass(bytes _annotations, bytes sub_class_of_class) public view returns (bytes32) {
-    var klass = buildSimpleClass(_annotations, sub_class_of_class);
+  function calculateHashClass(bytes[] _annotations, bytes[] sub_class_of_class) public view returns (bytes32) {
+    var klass = ClassCodec.Class(_annotations, sub_class_of_class);
     return hashClass(klass);
   }
 
-  function calculateCidClass(bytes _annotations, bytes sub_class_of_class) public returns (bytes) {
-    var klass = buildSimpleClass(_annotations, sub_class_of_class);
+  function calculateCidClass(bytes[] _annotations, bytes[] sub_class_of_class) public view returns (bytes _cid) {
+    var klass = ClassCodec.Class(_annotations, sub_class_of_class);
     var hash = hashClass(klass);
     return cid.wrapInCid(cidPrefixClass(), hash);
   }
@@ -175,33 +155,6 @@ contract OntologyStorage is IPropositionStorage {
   //
   // Individual
   //
-
-  // HACK: It appears that there are some bugs when it comes to passing in bytes[],
-  // so for now we are restricted to a single annotation and class_assertions.
-  function buildSimpleIndividual(bytes _annotations, bytes _class_assertions, bytes _negative_class_assertions) internal view returns (IndividualCodec.Individual) {
-
-    bytes[] memory __annotations = new bytes[](0);
-    if (cid.getPrefix(_annotations) == cidPrefixAnnotation()) {
-      __annotations = new bytes[](1);
-      __annotations[0] = _annotations;
-    }
-
-    bytes[] memory __class_assertions = new bytes[](0);
-    if (cid.getPrefix(_class_assertions) == cidPrefixClass()) {
-      __class_assertions = new bytes[](1);
-      __class_assertions[0] = _class_assertions;
-    }
-
-    bytes[] memory __negative_class_assertions = new bytes[](0);
-    if (cid.getPrefix(_negative_class_assertions) == cidPrefixClass()) {
-      __negative_class_assertions = new bytes[](1);
-      __negative_class_assertions[0] = _negative_class_assertions;
-    }
-
-    var ind = IndividualCodec.Individual(__annotations, __class_assertions, __negative_class_assertions);
-    return ind;
-  }
-
   function checkDependenciesAreStoredIndividual(IndividualCodec.Individual ind) internal view returns (bool) {
     for (uint i = 0; i < ind.annotations.length; i++) {
       var annotationCid = ind.annotations[i];
@@ -227,8 +180,8 @@ contract OntologyStorage is IPropositionStorage {
     return true;
   }
 
-  function storeIndividual(bytes _annotations, bytes _class_assertions, bytes _negative_class_assertions) public returns (bytes) {
-    var ind = buildSimpleIndividual(_annotations, _class_assertions, _negative_class_assertions);
+  function storeIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions) public returns (bytes) {
+    var ind = IndividualCodec.Individual(_annotations, _class_assertions, _negative_class_assertions);
     require(checkDependenciesAreStoredIndividual(ind));
     var hash = hashIndividual(ind);
     individuals[hash] = ind;
@@ -255,13 +208,13 @@ contract OntologyStorage is IPropositionStorage {
     return true;
   }
 
-  function calculateHashIndividual(bytes _annotations, bytes _class_assertions, bytes _negative_class_assertions) public view returns (bytes32) {
-    var ind = buildSimpleIndividual(_annotations, _class_assertions, _negative_class_assertions);
+  function calculateHashIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions) public view returns (bytes32) {
+    var ind = IndividualCodec.Individual(_annotations, _class_assertions, _negative_class_assertions);
     return hashIndividual(ind);
   }
 
-  function calculateCidIndividual(bytes _annotations, bytes _class_assertions, bytes _negative_class_assertions) public view returns (bytes) {
-    var ind = buildSimpleIndividual(_annotations, _class_assertions, _negative_class_assertions);
+  function calculateCidIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions) public view returns (bytes) {
+    var ind = IndividualCodec.Individual(_annotations, _class_assertions, _negative_class_assertions);
     var hash = hashIndividual(ind);
     return cid.wrapInCid(cidPrefixIndividual(), hash);
   }

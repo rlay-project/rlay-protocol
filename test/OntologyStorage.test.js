@@ -1,15 +1,31 @@
 var ethers = require("ethers");
 var OntologyStorage = artifacts.require("./OntologyStorage.sol");
 
-var buildEthersContract = address => {
+var buildEthersContract = (address, accounts) => {
   const abi = OntologyStorage.abi;
+  const privateKey =
+    "0x1c1a965a9fb6beb254bafa72588797b0268f43783cffbfa41659f47ae77a3529";
   const provider = new ethers.providers.JsonRpcProvider();
-  const contract = new ethers.Contract(address, abi, provider);
+  const wallet = new ethers.Wallet(privateKey, provider);
+  const contract = new ethers.Contract(address, abi, wallet);
 
-  return contract;
+  return { contract, provider };
+};
+
+var callEthersFunction = (contract, provider, fnName, args) => {
+  return contract[fnName](...args)
+    .then(res => provider.getTransactionReceipt(res.hash))
+    .then(res =>
+      contract.interface.functions[fnName].parseResult(res.logs[0].data)
+    );
 };
 
 contract("OntologyStorage", accounts => {
+  const { contract, provider } = buildEthersContract(
+    OntologyStorage.address,
+    accounts
+  );
+
   describe("Annotation", () => {
     it("should hash 'Organization' label annotation correctly", () => {
       return OntologyStorage.deployed()
@@ -88,11 +104,15 @@ contract("OntologyStorage", accounts => {
 
   describe("Class", () => {
     it("should hash class with 'Organization' label annotation correctly", () => {
-      return OntologyStorage.deployed()
+      return Promise.resolve(
+        buildEthersContract(OntologyStorage.address, accounts).contract
+      )
         .then(function(instance) {
-          return instance.calculateCidClass.call(
-            "0x01f0011b2003b86a4b4fb1f1dce175d2d13e2fe026a43cf522d5880c5936b2b2db7e915aac",
-            "0x00000000000000000000000000000000"
+          return instance.calculateCidClass(
+            [
+              "0x01f0011b2003b86a4b4fb1f1dce175d2d13e2fe026a43cf522d5880c5936b2b2db7e915aac"
+            ],
+            []
           );
         })
         .then(calculatedCid => {
@@ -104,11 +124,15 @@ contract("OntologyStorage", accounts => {
     });
 
     it("should hash class with sub_class_of_class correctly", () => {
-      return OntologyStorage.deployed()
+      return Promise.resolve(
+        buildEthersContract(OntologyStorage.address, accounts).contract
+      )
         .then(function(instance) {
-          return instance.calculateCidClass.call(
-            "0x00000000000000000000000000000000",
-            "0x01f1011b20f876cf456acb9c77b674d1ded27d6bf97d65dd1a772864a53613f9b3643f5ee7"
+          return instance.calculateCidClass(
+            [],
+            [
+              "0x01f1011b20f876cf456acb9c77b674d1ded27d6bf97d65dd1a772864a53613f9b3643f5ee7"
+            ]
           );
         })
         .then(calculatedCid => {
@@ -120,11 +144,15 @@ contract("OntologyStorage", accounts => {
     });
 
     it("should correctly check for non-existent annotation dependencies", () => {
-      return OntologyStorage.deployed()
+      return Promise.resolve(
+        buildEthersContract(OntologyStorage.address, accounts).contract
+      )
         .then(instance => {
           return instance.storeClass(
-            "0x01f0011b2003b86a4b4fb1f1dce175d2d13e2fe026a43cf522d5880c5936b2b2db7e915aac",
-            "0x00000000000000000000000000000000"
+            [
+              "0x01f0011b2003b86a4b4fb1f1dce175d2d13e2fe026a43cf522d5880c5936b2b2db7e915aac"
+            ],
+            []
           );
         })
         .catch(err => {
@@ -136,56 +164,64 @@ contract("OntologyStorage", accounts => {
     });
 
     it("should store class with existing annotation", () => {
-      return OntologyStorage.deployed().then(instance => {
-        return instance
-          .storeAnnotation(
-            "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
-            "Organization"
+      return callEthersFunction(contract, provider, "storeAnnotation", [
+        "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
+        "Organization"
+      ])
+        .then(([annotationCid]) =>
+          callEthersFunction(contract, provider, "storeClass", [
+            [annotationCid],
+            []
+          ])
+        )
+        .then(([storedCid]) => {
+          assert.equal(
+            "0x01f1011b20f876cf456acb9c77b674d1ded27d6bf97d65dd1a772864a53613f9b3643f5ee7",
+            storedCid
+          );
+        });
+    });
+
+    it("should store class with two annotations", () => {
+      return callEthersFunction(contract, provider, "storeAnnotation", [
+        "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
+        "Organization"
+      ])
+        .then(([annotationCid]) =>
+          callEthersFunction(contract, provider, "storeAnnotation", [
+            "0x16205d0fc86150f33d3628e636ee87cdf73abb9354dbdf2c541001d02fd4c219d7d5",
+            "A group of people consciously cooperating"
+          ]).then(([annotationCid2]) =>
+            callEthersFunction(contract, provider, "storeClass", [
+              [annotationCid, annotationCid2],
+              []
+            ])
           )
-          .then(storeTx => {
-            const storedCid = storeTx.logs[0].args._cid;
-            return storedCid;
-          })
-          .then(annotationCid => {
-            return instance.storeClass(
-              annotationCid,
-              "0x00000000000000000000000000000000"
-            );
-          })
-          .then(storeClassTx => {
-            const storedCid = storeClassTx.logs[0].args._cid;
-            assert.equal(
-              "0x01f1011b20f876cf456acb9c77b674d1ded27d6bf97d65dd1a772864a53613f9b3643f5ee7",
-              storedCid
-            );
-          });
-      });
+        )
+        .then(([storedCid]) => {
+          assert.equal(
+            "0x01f1011b20ef11ab42b1ec199b64cc64aa6e76572689d4259a89d5d7df90c6158c2ea8545e",
+            storedCid
+          );
+        });
     });
 
     it("should store class with existing annotation and sub_class_of_class", () => {
-      return OntologyStorage.deployed().then(instance => {
-        return instance
-          .storeAnnotation(
-            "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
-            "Organization"
+      return callEthersFunction(contract, provider, "storeAnnotation", [
+        "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
+        "Organization"
+      ]).then(([annotationCid]) => {
+        return callEthersFunction(contract, provider, "storeClass", [
+          [annotationCid],
+          []
+        ])
+          .then(([classCid]) =>
+            callEthersFunction(contract, provider, "storeClass", [
+              [annotationCid],
+              [classCid]
+            ])
           )
-          .then(storeTx => {
-            const storedCid = storeTx.logs[0].args._cid;
-            return storedCid;
-          })
-          .then(annotationCid => {
-            return instance
-              .storeClass(annotationCid, "0x00000000000000000000000000000000")
-              .then(storeClassTx => {
-                const classCid = storeClassTx.logs[0].args._cid;
-                return [annotationCid, classCid];
-              });
-          })
-          .then(([annotationCid, classCid]) => {
-            return instance.storeClass(annotationCid, classCid);
-          })
-          .then(storeClassTx => {
-            const classCid = storeClassTx.logs[0].args._cid;
+          .then(([classCid]) => {
             assert.equal(
               "0x01f1011b20e2f20e112dd2f43883caf321672fcf700448d8c9bf9920ab3ee70aa7b41c1c8f",
               classCid
@@ -195,33 +231,20 @@ contract("OntologyStorage", accounts => {
     });
 
     it("should be able to check for stored class with isStoredClass", () => {
-      return OntologyStorage.deployed().then(instance => {
-        return instance
-          .storeAnnotation(
-            "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
-            "Organization"
-          )
-          .then(storeTx => {
-            const storedCid = storeTx.logs[0].args._cid;
-            return storedCid;
-          })
-          .then(annotationCid => {
-            return instance.storeClass(
-              annotationCid,
-              "0x00000000000000000000000000000000"
-            );
-          })
-          .then(storeClassTx => {
-            const storedCid = storeClassTx.logs[0].args._cid;
-            return storedCid;
-          })
-          .then(classCid => {
-            return instance.isStoredClass.call(classCid);
-          })
-          .then(stored => {
-            assert.equal(true, stored);
-          });
-      });
+      return callEthersFunction(contract, provider, "storeAnnotation", [
+        "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
+        "Organization"
+      ])
+        .then(([annotationCid]) =>
+          callEthersFunction(contract, provider, "storeClass", [
+            [annotationCid],
+            []
+          ])
+        )
+        .then(([classCid]) => contract.isStoredClass(classCid))
+        .then(stored => {
+          assert.equal(true, stored);
+        });
     });
 
     it("should be able to check for unstored class with isStoredClass", () => {
@@ -237,41 +260,53 @@ contract("OntologyStorage", accounts => {
     });
 
     it("should be able to retrieve class with retrieveClass", () => {
-      return OntologyStorage.deployed().then(instance => {
-        return instance
-          .storeAnnotation(
-            "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
-            "Organization"
-          )
-          .then(storeTx => {
-            const storedCid = storeTx.logs[0].args._cid;
-            return storedCid;
-          })
-          .then(annotationCid => {
-            return instance.storeClass(
-              annotationCid,
-              "0x00000000000000000000000000000000"
-            );
-          })
-          .then(storeClassTx => {
-            const storedCid = storeClassTx.logs[0].args._cid;
-            return storedCid;
-          })
-          .then(classCid => {
-            const contract = buildEthersContract(instance.address);
+      return callEthersFunction(contract, provider, "storeAnnotation", [
+        "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
+        "Organization"
+      ])
+        .then(([annotationCid]) =>
+          callEthersFunction(contract, provider, "storeClass", [
+            [annotationCid],
+            []
+          ])
+        )
+        .then(([classCid]) => contract.retrieveClass(classCid))
+        .then(classParts => {
+          assert.equal(2, classParts.length);
+          assert.equal(1, classParts[0].length);
+          assert.equal(0, classParts[1].length);
+          assert.equal(
+            "0x01f0011b2003b86a4b4fb1f1dce175d2d13e2fe026a43cf522d5880c5936b2b2db7e915aac",
+            classParts[0][0]
+          );
+        });
+    });
+  });
 
-            return contract.retrieveClass(classCid);
-          })
-          .then(classParts => {
-            assert.equal(2, classParts.length);
-            assert.equal(1, classParts[0].length);
-            assert.equal(0, classParts[1].length);
-            assert.equal(
-              "0x01f0011b2003b86a4b4fb1f1dce175d2d13e2fe026a43cf522d5880c5936b2b2db7e915aac",
-              classParts[0][0]
-            );
-          });
-      });
+  describe("Individual", () => {
+    it("should store individual with existing annotation and class", () => {
+      return callEthersFunction(contract, provider, "storeAnnotation", [
+        "0x16200f5e42c8a237dca15459911ee1fc6a8fe51a274917c184887e0d329af6001511",
+        "Organization"
+      ])
+        .then(([annotationCid]) =>
+          callEthersFunction(contract, provider, "storeClass", [
+            [annotationCid],
+            []
+          ]).then(([classCid]) =>
+            callEthersFunction(contract, provider, "storeIndividual", [
+              [annotationCid],
+              [classCid],
+              []
+            ])
+          )
+        )
+        .then(([storedCid]) => {
+          assert.equal(
+            "0x01f2011b20e2f20e112dd2f43883caf321672fcf700448d8c9bf9920ab3ee70aa7b41c1c8f",
+            storedCid
+          );
+        });
     });
   });
 });
