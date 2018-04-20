@@ -1,6 +1,6 @@
 {
   "name": "spread-protocol",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "## Ontology Update Process",
   "main": "index.js",
   "scripts": {
