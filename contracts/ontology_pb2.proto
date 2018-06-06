@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package spread.ontology;
+package rlay.ontology;
 
 message Annotation {
   required bytes property = 1;

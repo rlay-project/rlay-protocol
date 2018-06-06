@@ -1,7 +1,7 @@
 var ethers = require("ethers");
 var OntologyStorage = artifacts.require("./OntologyStorage");
 var PropositionLedger = artifacts.require("./PropositionLedger");
-var SpreadToken = artifacts.require("./SpreadToken");
+var RlayToken = artifacts.require("./RlayToken");
 
 const nullValue = "0x00000000000000000000000000000000";
 
@@ -34,10 +34,10 @@ contract("PropositionLedger", accounts => {
   );
 
   it("should be able to submit a proposition", () => {
-    const tokenContractDeployed = SpreadToken.deployed();
+    const tokenContractDeployed = RlayToken.deployed();
     const ontologyContractDeployed = OntologyStorage.deployed();
     const propositionLedgerContractDeployed = PropositionLedger.new(
-      SpreadToken.address,
+      RlayToken.address,
       OntologyStorage.address
     );
 
@@ -85,10 +85,10 @@ contract("PropositionLedger", accounts => {
   });
 
   it("should not be possible to submit a proposition with insufficient funds", () => {
-    const tokenContractDeployed = SpreadToken.deployed();
+    const tokenContractDeployed = RlayToken.deployed();
     const ontologyContractDeployed = OntologyStorage.deployed();
     const propositionLedgerContractDeployed = PropositionLedger.new(
-      SpreadToken.address,
+      RlayToken.address,
       OntologyStorage.address
     );
 
@@ -139,10 +139,10 @@ contract("PropositionLedger", accounts => {
   });
 
   it("should not be possible to submit a proposition with unknown proposition", () => {
-    const tokenContractDeployed = SpreadToken.deployed();
+    const tokenContractDeployed = RlayToken.deployed();
     const ontologyContractDeployed = OntologyStorage.deployed();
     const propositionLedgerContractDeployed = PropositionLedger.new(
-      SpreadToken.address,
+      RlayToken.address,
       OntologyStorage.address
     );
 
