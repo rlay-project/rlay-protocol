@@ -1,7 +1,7 @@
 {
-  "package_name": "spread-protocol",
+  "package_name": "rlay-protocol",
   "version": "0.0.1",
-  "description": "Spread protocol",
+  "description": "Rlay protocol",
   "authors": [],
   "keywords": [],
   "dependencies": {

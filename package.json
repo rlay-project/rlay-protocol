@@ -1,7 +1,7 @@
 {
-  "name": "spread-protocol",
+  "name": "rlay-protocol",
   "version": "0.1.1",
-  "description": "## Ontology Update Process",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "build": "node_modules/.bin/truffle compile",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/spread-foundation/spread-protocol.git"
+    "url": "git+https://github.com/rlay-project/rlay-protocol.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "TODO",
   "bugs": {
-    "url": "https://github.com/spread-foundation/spread-protocol/issues"
+    "url": "https://github.com/rlay-project/rlay-protocol/issues"
   },
-  "homepage": "https://github.com/spread-foundation/spread-protocol#readme",
+  "homepage": "https://github.com/rlay-project/rlay-protocol#readme",
   "devDependencies": {
     "ethers": "^3.0.9",
     "ganache-cli": "^6.1.0",

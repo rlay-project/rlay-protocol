@@ -1,4 +1,4 @@
-# Spread-protocol - Implementation of the Spread protocol in Solidity
+# rlay-protocol - Implementation of the Rlay protocol in Solidity
 
 ## Setup
 
