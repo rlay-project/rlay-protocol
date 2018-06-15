@@ -8,7 +8,7 @@ import "tokens/eip20/EIP20Interface.sol";
 /// In the future this should extend to tracking more exactly who has added weight to a proposition,
 /// and at what point in time they did that
 contract PropositionLedger {
-  event PropositionWeightIncreased(bytes _cid, uint256 _amount);
+  event PropositionWeightIncreased(bytes _cid, uint256 _amount, address _sender);
   event PropositionWeightNewTotal(bytes _cid, uint256 _amount);
 
   address public tokenContractAddr;
@@ -52,7 +52,7 @@ contract PropositionLedger {
     bytes32 propositionHash = cid.unwrapCid(propositionCid);
     tokenContract.transferFrom(msg.sender, this, amount);
     weights[propositionHash] += amount;
-    emit PropositionWeightIncreased(propositionCid, amount);
+    emit PropositionWeightIncreased(propositionCid, amount, msg.sender);
     emit PropositionWeightNewTotal(propositionCid, weights[propositionHash]);
   }
 }
