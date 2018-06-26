@@ -23,7 +23,10 @@
   "devDependencies": {
     "ethers": "^3.0.9",
     "ganache-cli": "^6.1.0",
-    "truffle": "^4.1.5",
+    "truffle": "^4.1.11",
     "web3": "^0.18.4"
+  },
+  "dependencies": {
+    "openzeppelin-solidity": "1.10.0"
   }
 }
