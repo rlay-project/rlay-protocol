@@ -27,6 +27,7 @@
     "web3": "^0.18.4"
   },
   "dependencies": {
-    "openzeppelin-solidity": "1.10.0"
+    "openzeppelin-solidity": "1.10.0",
+    "solium": "^1.1.7"
   }
 }
