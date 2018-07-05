@@ -15,7 +15,7 @@
     "url": "git+https://github.com/rlay-project/rlay-protocol.git"
   },
   "author": "",
-  "license": "TODO",
+  "license": "MIT OR Apache-2.0",
   "bugs": {
     "url": "https://github.com/rlay-project/rlay-protocol/issues"
   },
