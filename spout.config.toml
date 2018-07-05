@@ -1,0 +1,11 @@
+# The address of the deployed ERC20 token contract.
+erc20_contract_address = "0x10ef71366ad76d6bddddc66677c38e137aa564db"
+
+# The address that holds the faucet funds.
+faucet_funds_address = "0xc02345a911471fd46c47c4d3c2e5c85f5ae93d13"
+
+# The amount of host network currency (e.g. ETH) that will be sent per faucet request.
+network_currency_drip_amount = "1000000000000000000"
+
+# The amount of the ERC20 token that will be sent per faucet request.
+erc20_drip_amount = "1000000000000000000"
