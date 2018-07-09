@@ -7,6 +7,8 @@ import "openzeppelin-solidity/contracts/MerkleProof.sol";
 contract RlayToken is EIP20 {
     // owner required for temporary workaround of permissioned payout calculation
     address public owner;
+    // start block of all epochs
+    uint256 public epochs_start;
     // mapping of epochs to the merkle root of the payouts for that epoch
     mapping (uint256 => bytes32) public payout_roots;
     // keeps track of the total withrawals made for a address
@@ -19,6 +21,7 @@ contract RlayToken is EIP20 {
         "RLAY"
     ) public {
         owner = msg.sender;
+        epochs_start = block.number;
     }
 
     function mintedAmountPerEpoch()
