@@ -2,18 +2,14 @@ syntax = "proto2";
 
 package rlay.ontology;
 
-message Annotation {
-  required bytes property = 1;
-  required string value = 2; // TODO: change to accept both IRI or literal
-}
-
 message Class {
   repeated bytes annotations = 1;
-  repeated bytes sub_class_of_class = 2;
+  repeated bytes superClassExpression = 2;
 }
 
-message Individual {
+message ObjectComplementOf {
   repeated bytes annotations = 1;
-  repeated bytes class_assertions = 2;
-  repeated bytes negative_class_assertions = 3;
+  required bytes complementOf = 2;
+  repeated bytes superClassExpression = 3;
 }
+
