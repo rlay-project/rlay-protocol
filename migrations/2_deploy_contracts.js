@@ -19,13 +19,16 @@ var pbLibraries = [
   "DataExactCardinality",
   "ObjectProperty",
   "InverseObjectProperty",
+  "DataProperty",
   "Annotation",
   "Individual",
   "AnnotationProperty",
   "ClassAssertion",
   "NegativeClassAssertion",
   "ObjectPropertyAssertion",
-  "NegativeObjectPropertyAssertion"
+  "NegativeObjectPropertyAssertion",
+  "DataPropertyAssertion",
+  "NegativeDataPropertyAssertion"
 ];
 
 var solLibraries = pbLibraries.map(n => artifacts.require(`${n}Storage`));

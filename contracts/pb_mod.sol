@@ -2307,6 +2307,119 @@ library InverseObjectPropertyCodec {
     assembly { r := iszero(x) }
   }
 }
+library DataPropertyCodec {
+  struct DataProperty {
+    bytes[] annotations;
+    bytes[] superDataPropertyExpression;
+  }
+  // Decoder section
+
+  function decode(bytes bs) internal constant returns (DataProperty) {
+    var (x,) = _decode(32, bs, bs.length);
+    return x;
+  }
+
+  function _decode(uint p, bytes bs, uint sz)
+      internal constant returns (DataProperty, uint) {
+    DataProperty memory r;
+    uint[2] memory counters;
+    uint fieldId;
+    _pb.WireType wireType;
+    uint bytesRead;
+    uint offset = p;
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, nil(), counters);
+      else if(fieldId == 2)
+        p += _read_superDataPropertyExpression(p, bs, nil(), counters);
+      else throw;
+    }
+    p = offset;
+    r.annotations = new bytes[](counters[0]);
+    r.superDataPropertyExpression = new bytes[](counters[1]);
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, r, counters);
+      else if(fieldId == 2)
+        p += _read_superDataPropertyExpression(p, bs, r, counters);
+      else throw;
+    }
+    return (r, sz);
+  }
+
+  function _read_annotations(uint p, bytes bs, DataProperty r, uint[2] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[0] += 1;
+    } else {
+      r.annotations[ r.annotations.length - counters[0] ] = x;
+      if(counters[0] > 0) counters[0] -= 1;
+    }
+    return sz;
+  }
+  function _read_superDataPropertyExpression(uint p, bytes bs, DataProperty r, uint[2] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[1] += 1;
+    } else {
+      r.superDataPropertyExpression[ r.superDataPropertyExpression.length - counters[1] ] = x;
+      if(counters[1] > 0) counters[1] -= 1;
+    }
+    return sz;
+  }
+  // Encoder section
+
+  function encode(DataProperty r) internal constant returns (bytes) {
+    bytes memory bs = new bytes(_estimate(r));
+    uint sz = _encode(r, 32, bs);
+    assembly { mstore(bs, sz) }
+    return bs;
+  }
+  function _encode(DataProperty r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) {
+      p += _pb._encode_key(1, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.annotations[i], p, bs);
+    }
+    for(i=0; i<r.superDataPropertyExpression.length; i++) {
+      p += _pb._encode_key(2, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.superDataPropertyExpression[i], p, bs);
+    }
+    return p - offset;
+  }
+  function _encode_nested(DataProperty r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    p += _pb._encode_varint(_estimate(r), p, bs);
+    p += _encode(r, p, bs);
+    return p - offset;
+  }
+  function _estimate(DataProperty r) internal constant returns (uint) {
+    uint e;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) e+= 1 + _pb._sz_lendelim(r.annotations[i].length);
+    for(i=0; i<r.superDataPropertyExpression.length; i++) e+= 1 + _pb._sz_lendelim(r.superDataPropertyExpression[i].length);
+    return e;
+  }
+  function store(DataProperty memory input, DataProperty storage output) internal {
+    output.annotations = input.annotations;
+    output.superDataPropertyExpression = input.superDataPropertyExpression;
+  }
+  function nil() internal constant returns (DataProperty r) {
+    assembly { r := 0 }
+  }
+  function isNil(DataProperty x) internal constant returns (bool r) {
+    assembly { r := iszero(x) }
+  }
+}
 library AnnotationCodec {
   struct Annotation {
     bytes[] annotations;
@@ -3174,6 +3287,306 @@ library NegativeObjectPropertyAssertionCodec {
     assembly { r := 0 }
   }
   function isNil(NegativeObjectPropertyAssertion x) internal constant returns (bool r) {
+    assembly { r := iszero(x) }
+  }
+}
+library DataPropertyAssertionCodec {
+  struct DataPropertyAssertion {
+    bytes[] annotations;
+    bytes property;
+    bytes subject;
+    bytes target;
+  }
+  // Decoder section
+
+  function decode(bytes bs) internal constant returns (DataPropertyAssertion) {
+    var (x,) = _decode(32, bs, bs.length);
+    return x;
+  }
+
+  function _decode(uint p, bytes bs, uint sz)
+      internal constant returns (DataPropertyAssertion, uint) {
+    DataPropertyAssertion memory r;
+    uint[4] memory counters;
+    uint fieldId;
+    _pb.WireType wireType;
+    uint bytesRead;
+    uint offset = p;
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, nil(), counters);
+      else if(fieldId == 2)
+        p += _read_property(p, bs, r, counters);
+      else if(fieldId == 3)
+        p += _read_subject(p, bs, r, counters);
+      else if(fieldId == 4)
+        p += _read_target(p, bs, r, counters);
+      else throw;
+    }
+    p = offset;
+    r.annotations = new bytes[](counters[0]);
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, r, counters);
+      else if(fieldId == 2)
+        p += _read_property(p, bs, nil(), counters);
+      else if(fieldId == 3)
+        p += _read_subject(p, bs, nil(), counters);
+      else if(fieldId == 4)
+        p += _read_target(p, bs, nil(), counters);
+      else throw;
+    }
+    return (r, sz);
+  }
+
+  function _read_annotations(uint p, bytes bs, DataPropertyAssertion r, uint[4] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[0] += 1;
+    } else {
+      r.annotations[ r.annotations.length - counters[0] ] = x;
+      if(counters[0] > 0) counters[0] -= 1;
+    }
+    return sz;
+  }
+  function _read_property(uint p, bytes bs, DataPropertyAssertion r, uint[4] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[1] += 1;
+    } else {
+      r.property = x;
+      if(counters[1] > 0) counters[1] -= 1;
+    }
+    return sz;
+  }
+  function _read_subject(uint p, bytes bs, DataPropertyAssertion r, uint[4] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[2] += 1;
+    } else {
+      r.subject = x;
+      if(counters[2] > 0) counters[2] -= 1;
+    }
+    return sz;
+  }
+  function _read_target(uint p, bytes bs, DataPropertyAssertion r, uint[4] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[3] += 1;
+    } else {
+      r.target = x;
+      if(counters[3] > 0) counters[3] -= 1;
+    }
+    return sz;
+  }
+  // Encoder section
+
+  function encode(DataPropertyAssertion r) internal constant returns (bytes) {
+    bytes memory bs = new bytes(_estimate(r));
+    uint sz = _encode(r, 32, bs);
+    assembly { mstore(bs, sz) }
+    return bs;
+  }
+  function _encode(DataPropertyAssertion r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) {
+      p += _pb._encode_key(1, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.annotations[i], p, bs);
+    }
+    p += _pb._encode_key(2, _pb.WireType.LengthDelim, p, bs);
+    p += _pb._encode_bytes(r.property, p, bs);
+    p += _pb._encode_key(3, _pb.WireType.LengthDelim, p, bs);
+    p += _pb._encode_bytes(r.subject, p, bs);
+    p += _pb._encode_key(4, _pb.WireType.LengthDelim, p, bs);
+    p += _pb._encode_bytes(r.target, p, bs);
+    return p - offset;
+  }
+  function _encode_nested(DataPropertyAssertion r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    p += _pb._encode_varint(_estimate(r), p, bs);
+    p += _encode(r, p, bs);
+    return p - offset;
+  }
+  function _estimate(DataPropertyAssertion r) internal constant returns (uint) {
+    uint e;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) e+= 1 + _pb._sz_lendelim(r.annotations[i].length);
+    e += 1 + _pb._sz_lendelim(r.property.length);
+    e += 1 + _pb._sz_lendelim(r.subject.length);
+    e += 1 + _pb._sz_lendelim(r.target.length);
+    return e;
+  }
+  function store(DataPropertyAssertion memory input, DataPropertyAssertion storage output) internal {
+    output.annotations = input.annotations;
+    output.property = input.property;
+    output.subject = input.subject;
+    output.target = input.target;
+  }
+  function nil() internal constant returns (DataPropertyAssertion r) {
+    assembly { r := 0 }
+  }
+  function isNil(DataPropertyAssertion x) internal constant returns (bool r) {
+    assembly { r := iszero(x) }
+  }
+}
+library NegativeDataPropertyAssertionCodec {
+  struct NegativeDataPropertyAssertion {
+    bytes[] annotations;
+    bytes property;
+    bytes subject;
+    bytes target;
+  }
+  // Decoder section
+
+  function decode(bytes bs) internal constant returns (NegativeDataPropertyAssertion) {
+    var (x,) = _decode(32, bs, bs.length);
+    return x;
+  }
+
+  function _decode(uint p, bytes bs, uint sz)
+      internal constant returns (NegativeDataPropertyAssertion, uint) {
+    NegativeDataPropertyAssertion memory r;
+    uint[4] memory counters;
+    uint fieldId;
+    _pb.WireType wireType;
+    uint bytesRead;
+    uint offset = p;
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, nil(), counters);
+      else if(fieldId == 2)
+        p += _read_property(p, bs, r, counters);
+      else if(fieldId == 3)
+        p += _read_subject(p, bs, r, counters);
+      else if(fieldId == 4)
+        p += _read_target(p, bs, r, counters);
+      else throw;
+    }
+    p = offset;
+    r.annotations = new bytes[](counters[0]);
+    while(p < offset+sz) {
+      (fieldId, wireType, bytesRead) = _pb._decode_key(p, bs);
+      p += bytesRead;
+      if(fieldId == 1)
+        p += _read_annotations(p, bs, r, counters);
+      else if(fieldId == 2)
+        p += _read_property(p, bs, nil(), counters);
+      else if(fieldId == 3)
+        p += _read_subject(p, bs, nil(), counters);
+      else if(fieldId == 4)
+        p += _read_target(p, bs, nil(), counters);
+      else throw;
+    }
+    return (r, sz);
+  }
+
+  function _read_annotations(uint p, bytes bs, NegativeDataPropertyAssertion r, uint[4] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[0] += 1;
+    } else {
+      r.annotations[ r.annotations.length - counters[0] ] = x;
+      if(counters[0] > 0) counters[0] -= 1;
+    }
+    return sz;
+  }
+  function _read_property(uint p, bytes bs, NegativeDataPropertyAssertion r, uint[4] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[1] += 1;
+    } else {
+      r.property = x;
+      if(counters[1] > 0) counters[1] -= 1;
+    }
+    return sz;
+  }
+  function _read_subject(uint p, bytes bs, NegativeDataPropertyAssertion r, uint[4] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[2] += 1;
+    } else {
+      r.subject = x;
+      if(counters[2] > 0) counters[2] -= 1;
+    }
+    return sz;
+  }
+  function _read_target(uint p, bytes bs, NegativeDataPropertyAssertion r, uint[4] counters)
+      internal constant returns (uint) {
+    var (x, sz) = _pb._decode_bytes(p, bs);
+    if(isNil(r)) {
+      counters[3] += 1;
+    } else {
+      r.target = x;
+      if(counters[3] > 0) counters[3] -= 1;
+    }
+    return sz;
+  }
+  // Encoder section
+
+  function encode(NegativeDataPropertyAssertion r) internal constant returns (bytes) {
+    bytes memory bs = new bytes(_estimate(r));
+    uint sz = _encode(r, 32, bs);
+    assembly { mstore(bs, sz) }
+    return bs;
+  }
+  function _encode(NegativeDataPropertyAssertion r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) {
+      p += _pb._encode_key(1, _pb.WireType.LengthDelim, p, bs);
+      p += _pb._encode_bytes(r.annotations[i], p, bs);
+    }
+    p += _pb._encode_key(2, _pb.WireType.LengthDelim, p, bs);
+    p += _pb._encode_bytes(r.property, p, bs);
+    p += _pb._encode_key(3, _pb.WireType.LengthDelim, p, bs);
+    p += _pb._encode_bytes(r.subject, p, bs);
+    p += _pb._encode_key(4, _pb.WireType.LengthDelim, p, bs);
+    p += _pb._encode_bytes(r.target, p, bs);
+    return p - offset;
+  }
+  function _encode_nested(NegativeDataPropertyAssertion r, uint p, bytes bs)
+      internal constant returns (uint) {
+    uint offset = p;
+    p += _pb._encode_varint(_estimate(r), p, bs);
+    p += _encode(r, p, bs);
+    return p - offset;
+  }
+  function _estimate(NegativeDataPropertyAssertion r) internal constant returns (uint) {
+    uint e;
+    uint i;
+    for(i=0; i<r.annotations.length; i++) e+= 1 + _pb._sz_lendelim(r.annotations[i].length);
+    e += 1 + _pb._sz_lendelim(r.property.length);
+    e += 1 + _pb._sz_lendelim(r.subject.length);
+    e += 1 + _pb._sz_lendelim(r.target.length);
+    return e;
+  }
+  function store(NegativeDataPropertyAssertion memory input, NegativeDataPropertyAssertion storage output) internal {
+    output.annotations = input.annotations;
+    output.property = input.property;
+    output.subject = input.subject;
+    output.target = input.target;
+  }
+  function nil() internal constant returns (NegativeDataPropertyAssertion r) {
+    assembly { r := 0 }
+  }
+  function isNil(NegativeDataPropertyAssertion x) internal constant returns (bool r) {
     assembly { r := iszero(x) }
   }
 }

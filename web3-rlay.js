@@ -97,10 +97,10 @@ const buildEthersInterfaceRlayToken = () => {
 };
 
 const store = (web3, entity, options) => {
-  const interface = buildEthersInterfaceOntologyStorage();
+  const iface = buildEthersInterfaceOntologyStorage();
 
   const storeFnName = `store${entity.type}`;
-  const contractFn = interface.functions[storeFnName];
+  const contractFn = iface.functions[storeFnName];
 
   return web3.rlay
     .version()
@@ -118,10 +118,10 @@ const store = (web3, entity, options) => {
 };
 
 const retrieve = (web3, cid, options) => {
-  const interface = buildEthersInterfaceOntologyStorage();
+  const iface = buildEthersInterfaceOntologyStorage();
 
   // const storeFnName = `retrieve${entityKind}`;
-  // const contractFn = interface.functions[storeFnName];
+  // const contractFn = iface.functions[storeFnName];
 
   const ontologyAddress = web3.rlay
     .version()
@@ -148,7 +148,7 @@ const retrieve = (web3, cid, options) => {
 };
 
 const addWeight = (web3, cid, weight, options) => {
-  const interface = buildEthersInterfacePropositionLedger();
+  const iface = buildEthersInterfacePropositionLedger();
   const tokenInterface = buildEthersInterfaceRlayToken();
 
   const contractAddresses = web3.rlay
@@ -162,7 +162,7 @@ const addWeight = (web3, cid, weight, options) => {
       weight
     ).data;
 
-    const submitPropositionFn = interface.functions["submitProposition"];
+    const submitPropositionFn = iface.functions["submitProposition"];
     const submitPropositionEncoded = submitPropositionFn(cid, weight).data;
 
     return web3.eth
@@ -182,10 +182,10 @@ const addWeight = (web3, cid, weight, options) => {
 };
 
 const encodeForStore = entity => {
-  const interface = buildEthersInterfaceOntologyStorage();
+  const iface = buildEthersInterfaceOntologyStorage();
 
   const storeFnName = `store${entity.type}`;
-  const contractFn = interface.functions[storeFnName];
+  const contractFn = iface.functions[storeFnName];
 
   const params = [];
   contractFn.inputs.names.forEach((paramName, paramIdx) => {
@@ -205,18 +205,18 @@ const encodeForStore = entity => {
 };
 
 const encodeForRetrieve = (entityKind, cid) => {
-  const interface = buildEthersInterfaceOntologyStorage();
+  const iface = buildEthersInterfaceOntologyStorage();
 
   const storeFnName = `retrieve${entityKind}`;
-  const contractFn = interface.functions[storeFnName];
+  const contractFn = iface.functions[storeFnName];
   return contractFn(cid).data;
 };
 
 const decodeFromRetrieve = (entityKind, responseData) => {
-  const interface = buildEthersInterfaceOntologyStorage();
+  const iface = buildEthersInterfaceOntologyStorage();
 
   const storeFnName = `retrieve${entityKind}`;
-  const contractFn = interface.functions[storeFnName];
+  const contractFn = iface.functions[storeFnName];
 
   const parsed = contractFn.parseResult(responseData);
 
