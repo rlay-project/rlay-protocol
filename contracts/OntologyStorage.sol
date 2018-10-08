@@ -3,239 +3,1752 @@ pragma experimental ABIEncoderV2;
 
 import "./cid.sol";
 import "./pb_mod.sol";
-import "./IPropositionStorage.sol";
 
-/// @notice The OntologyStorage keeps track of all the ontological entities required to construct propositions, and the propositions themselves.
-// The structure for each of the entities is very similar:
-//
-// store<Entity> function: Stores the entity, in the process checking its wellformedness. Returns the CID, under which it can later be retrieved and referenced.
-// retrieve<Entity> function: Retrieve entity by its CID.
-// isStored<Entity> function: Checks if an entity is stored by its CID.
-// calculateCid<Entity> function: Calculate the CID of an entity.
-// cidPrefix<Entity> function: Returns the CID prefix for an entity, which can be used to find out the type of entity.
-// hashCid<Entity> function: Hash the entity, producing the latter part of the CID.
-// checkDependenciesAreStored<Entity> function: Check if all the CIDs that are referenced in the entity are already stored in the contract.
-// <Entity>Stored event: Is emitted when `store<Entity>` is called successfully.
-contract OntologyStorage is IPropositionStorage {
-    mapping (bytes32 => AnnotationCodec.Annotation) private annotations;
-    mapping (bytes32 => ClassCodec.Class) private classes;
-    mapping (bytes32 => IndividualCodec.Individual) private individuals;
+interface IClassStorage {
+    function storeClass(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
 
-    event AnnotationStored(bytes _cid);
+    function retrieveClass(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectIntersectionOfStorage {
+    function storeObjectIntersectionOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectIntersectionOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectUnionOfStorage {
+    function storeObjectUnionOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectUnionOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectComplementOfStorage {
+    function storeObjectComplementOf(bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression);
+
+}
+
+interface IObjectOneOfStorage {
+    function storeObjectOneOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectOneOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectSomeValuesFromStorage {
+    function storeObjectSomeValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectSomeValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectAllValuesFromStorage {
+    function storeObjectAllValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectAllValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectHasValueStorage {
+    function storeObjectHasValue(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectHasValue(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectHasSelfStorage {
+    function storeObjectHasSelf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectHasSelf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectMinCardinalityStorage {
+    function storeObjectMinCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectMinCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectMaxCardinalityStorage {
+    function storeObjectMaxCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectMaxCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectExactCardinalityStorage {
+    function storeObjectExactCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveObjectExactCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IDataSomeValuesFromStorage {
+    function storeDataSomeValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveDataSomeValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IDataAllValuesFromStorage {
+    function storeDataAllValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveDataAllValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IDataHasValueStorage {
+    function storeDataHasValue(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveDataHasValue(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IDataMinCardinalityStorage {
+    function storeDataMinCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveDataMinCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IDataMaxCardinalityStorage {
+    function storeDataMaxCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveDataMaxCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IDataExactCardinalityStorage {
+    function storeDataExactCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
+
+    function retrieveDataExactCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression);
+
+}
+
+interface IObjectPropertyStorage {
+    function storeObjectProperty(bytes[] _annotations, bytes[] _superObjectPropertyExpression) public returns (bytes);
+
+    function retrieveObjectProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superObjectPropertyExpression);
+
+}
+
+interface IInverseObjectPropertyStorage {
+    function storeInverseObjectProperty(bytes[] _annotations, bytes[] _superObjectPropertyExpression) public returns (bytes);
+
+    function retrieveInverseObjectProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superObjectPropertyExpression);
+
+}
+
+interface IDataPropertyStorage {
+    function storeDataProperty(bytes[] _annotations, bytes[] _superDataPropertyExpression) public returns (bytes);
+
+    function retrieveDataProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superDataPropertyExpression);
+
+}
+
+interface IAnnotationStorage {
+    function storeAnnotation(bytes[] _annotations, bytes _property, bytes _value) public returns (bytes);
+
+    function retrieveAnnotation(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _value);
+
+}
+
+interface IIndividualStorage {
+    function storeIndividual(bytes[] _annotations) public returns (bytes);
+
+    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations);
+
+}
+
+interface IAnnotationPropertyStorage {
+    function storeAnnotationProperty(bytes[] _annotations) public returns (bytes);
+
+    function retrieveAnnotationProperty(bytes _cid) external view returns (bytes[] _annotations);
+
+}
+
+interface IClassAssertionStorage {
+    function storeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes);
+
+    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject);
+
+}
+
+interface INegativeClassAssertionStorage {
+    function storeNegativeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes);
+
+    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject);
+
+}
+
+interface IObjectPropertyAssertionStorage {
+    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes);
+
+    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target);
+
+}
+
+interface INegativeObjectPropertyAssertionStorage {
+    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes);
+
+    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target);
+
+}
+
+interface IDataPropertyAssertionStorage {
+    function storeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes);
+
+    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target);
+
+}
+
+interface INegativeDataPropertyAssertionStorage {
+    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes);
+
+    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target);
+
+}
+
+contract ClassStorage is IClassStorage {
+    mapping (bytes32 => ClassCodec.Class) private class_hash_map;
+
+    bytes6 constant cidPrefixClass = 0x018080031b20;
+
     event ClassStored(bytes _cid);
-    event IndividualStored(bytes _cid);
 
-    //
-    // Annotation
-    //
+    function storeClass(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ClassCodec.Class memory _instance = ClassCodec.Class(_annotations, _superClassExpression);
+        bytes32 hash = hashClass(_instance);
 
-    function storeAnnotation(bytes property, string value) public returns (bytes) {
-        var ann = AnnotationCodec.Annotation(property, value);
-        var hash = hashAnnotation(ann);
-        annotations[hash] = ann;
+        class_hash_map[hash] = _instance;
 
-        var annCid = cid.wrapInCid(cidPrefixAnnotation(), hash);
-        emit AnnotationStored(annCid);
-        return annCid;
+        bytes memory _cid = cid.wrapInCid(cidPrefixClass, hash);
+        emit ClassStored(_cid);
+        return _cid;
     }
 
-    function retrieveAnnotation(bytes annCid) public view returns (bytes, string) {
-        bytes32 hash = cid.unwrapCid(annCid);
-        var ann = annotations[hash];
-
-        return (ann.property, ann.value);
+    function retrieveClass(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ClassCodec.Class memory _instance = class_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
     }
 
-    function isStoredAnnotation(bytes annCid) public view returns (bool exists) {
-        bytes32 hash = cid.unwrapCid(annCid);
-        AnnotationCodec.Annotation memory ann = annotations[hash];
-
-        bytes32 propertyHash = cid.unwrapCid(ann.property);
-        bytes32 defaultBytes;
-        return propertyHash != defaultBytes;
-    }
-
-    function calculateHashAnnotation(bytes property, string value) public view returns (bytes32) {
-        var ann = AnnotationCodec.Annotation(property, value);
-        return hashAnnotation(ann);
-    }
-
-    function calculateCidAnnotation(bytes property, string value) public view returns (bytes) {
-        var ann = AnnotationCodec.Annotation(property, value);
-        var hash = hashAnnotation(ann);
-        return cid.wrapInCid(cidPrefixAnnotation(), hash);
-    }
-
-    function cidPrefixAnnotation() private pure returns (bytes5) {
-        bytes5 annCidPrefix = 0x01f0011b20;
-        return annCidPrefix;
-    }
-
-    function hashAnnotation(AnnotationCodec.Annotation ann) private view returns (bytes32) {
-        var enc = AnnotationCodec.encode(ann);
-        var hash = keccak256(enc);
+    function hashClass(ClassCodec.Class memory _instance) public view returns (bytes32) {
+        bytes memory enc = ClassCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
 
         return hash;
     }
 
-    //
-    // Class
-    //
-
-    function checkDependenciesAreStoredClass(ClassCodec.Class klass) internal view returns (bool) {
-        for (uint i = 0; i < klass.annotations.length; i++) {
-            var annotationCid = klass.annotations[i];
-            if (!isStoredAnnotation(annotationCid)) {
-                return false;
-            }
-        }
-
-        for (uint j = 0; j < klass.sub_class_of_class.length; j++) {
-            var classCid = klass.sub_class_of_class[j];
-            if (!isStoredClass(classCid)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    function storeClass(bytes[] _annotations, bytes[] sub_class_of_class) public returns (bytes) {
-        var klass = ClassCodec.Class(_annotations, sub_class_of_class);
-        require(checkDependenciesAreStoredClass(klass));
-        var hash = hashClass(klass);
-
-        classes[hash] = klass;
-
-        var classCid = cid.wrapInCid(cidPrefixClass(), hash);
-        emit ClassStored(classCid);
-        return classCid;
-    }
-
-    function retrieveClass(bytes classCid) public view returns (bytes[], bytes[]) {
-        bytes32 hash = cid.unwrapCid(classCid);
-        var klass = classes[hash];
-
-        return (klass.annotations, klass.sub_class_of_class);
-    }
-
-    function isStoredClass(bytes classCid) public view returns (bool exists) {
-        bytes32 hash = cid.unwrapCid(classCid);
-        ClassCodec.Class memory klass = classes[hash];
-
-        if (klass.annotations.length == 0 && klass.sub_class_of_class.length == 0) {
-            return false;
-        }
-        return true;
-    }
-
-    function calculateHashClass(bytes[] _annotations, bytes[] sub_class_of_class) public view returns (bytes32) {
-        var klass = ClassCodec.Class(_annotations, sub_class_of_class);
-        return hashClass(klass);
-    }
-
-    function calculateCidClass(bytes[] _annotations, bytes[] sub_class_of_class) public view returns (bytes _cid) {
-        var klass = ClassCodec.Class(_annotations, sub_class_of_class);
-        var hash = hashClass(klass);
-        return cid.wrapInCid(cidPrefixClass(), hash);
-    }
-
-    function cidPrefixClass() private pure returns (bytes5) {
-        bytes5 classCidPrefix = 0x01f1011b20;
-        return classCidPrefix;
-    }
-
-    function hashClass(ClassCodec.Class klass) private view returns (bytes32) {
-        var enc = ClassCodec.encode(klass);
-        var hash = keccak256(enc);
-
-        return hash;
-    }
-
-    //
-    // Individual
-    //
-    function checkDependenciesAreStoredIndividual(IndividualCodec.Individual ind) internal view returns (bool) {
-        for (uint i = 0; i < ind.annotations.length; i++) {
-            var annotationCid = ind.annotations[i];
-            if (!isStoredAnnotation(annotationCid)) {
-                return false;
-            }
-        }
-
-        for (uint j = 0; j < ind.class_assertions.length; j++) {
-            var classCid = ind.class_assertions[j];
-            if (!isStoredClass(classCid)) {
-                return false;
-            }
-        }
-
-        for (uint k = 0; k < ind.negative_class_assertions.length; k++) {
-            var classCid2 = ind.negative_class_assertions[k];
-            if (!isStoredClass(classCid2)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    function storeIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions) public returns (bytes) {
-        var ind = IndividualCodec.Individual(_annotations, _class_assertions, _negative_class_assertions);
-        require(checkDependenciesAreStoredIndividual(ind));
-        var hash = hashIndividual(ind);
-        individuals[hash] = ind;
-
-        var indCid = cid.wrapInCid(cidPrefixIndividual(), hash);
-        emit IndividualStored(indCid);
-        return indCid;
-    }
-
-    function retrieveIndividual(bytes indCid) public view returns (bytes[], bytes[], bytes[]) {
-        bytes32 hash = cid.unwrapCid(indCid);
-        var ind = individuals[hash];
-
-        return (ind.annotations, ind.class_assertions, ind.negative_class_assertions);
-    }
-
-    function isStoredIndividual(bytes indCid) public view returns (bool exists) {
-        bytes32 hash = cid.unwrapCid(indCid);
-        IndividualCodec.Individual memory ind = individuals[hash];
-
-        if (ind.annotations.length == 0 && ind.class_assertions.length == 0) {
-            return false;
-        }
-        return true;
-    }
-
-    function calculateHashIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions) public view returns (bytes32) {
-        var ind = IndividualCodec.Individual(_annotations, _class_assertions, _negative_class_assertions);
-        return hashIndividual(ind);
-    }
-
-    function calculateCidIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions) public view returns (bytes) {
-        var ind = IndividualCodec.Individual(_annotations, _class_assertions, _negative_class_assertions);
-        var hash = hashIndividual(ind);
-        return cid.wrapInCid(cidPrefixIndividual(), hash);
-    }
-
-    function cidPrefixIndividual() private pure returns (bytes5) {
-        bytes5 cidPrefix = 0x01f2011b20;
-        return cidPrefix;
-    }
-
-    function hashIndividual(IndividualCodec.Individual ind) private view returns (bytes32) {
-        var enc = IndividualCodec.encode(ind);
-        var hash = keccak256(enc);
-
-        return hash;
-    }
-
-    //
-    // Interface: IPropositionStorage
-    //
-
-    function isPropositionStored(bytes proposition) public view returns (bool stored) {
-        return isStoredIndividual(proposition);
+    function calculateCidClass(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ClassCodec.Class memory _instance = ClassCodec.Class(_annotations, _superClassExpression);
+        bytes32 _hash = hashClass(_instance);
+        return cid.wrapInCid(cidPrefixClass, _hash);
     }
 }
+
+contract ObjectIntersectionOfStorage is IObjectIntersectionOfStorage {
+    mapping (bytes32 => ObjectIntersectionOfCodec.ObjectIntersectionOf) private objectintersectionof_hash_map;
+
+    bytes6 constant cidPrefixObjectIntersectionOf = 0x018180031b20;
+
+    event ObjectIntersectionOfStored(bytes _cid);
+
+    function storeObjectIntersectionOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectIntersectionOfCodec.ObjectIntersectionOf memory _instance = ObjectIntersectionOfCodec.ObjectIntersectionOf(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectIntersectionOf(_instance);
+
+        objectintersectionof_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectIntersectionOf, hash);
+        emit ObjectIntersectionOfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectIntersectionOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectIntersectionOfCodec.ObjectIntersectionOf memory _instance = objectintersectionof_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectIntersectionOf(ObjectIntersectionOfCodec.ObjectIntersectionOf memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectIntersectionOfCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectIntersectionOf(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectIntersectionOfCodec.ObjectIntersectionOf memory _instance = ObjectIntersectionOfCodec.ObjectIntersectionOf(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectIntersectionOf(_instance);
+        return cid.wrapInCid(cidPrefixObjectIntersectionOf, _hash);
+    }
+}
+
+contract ObjectUnionOfStorage is IObjectUnionOfStorage {
+    mapping (bytes32 => ObjectUnionOfCodec.ObjectUnionOf) private objectunionof_hash_map;
+
+    bytes6 constant cidPrefixObjectUnionOf = 0x018280031b20;
+
+    event ObjectUnionOfStored(bytes _cid);
+
+    function storeObjectUnionOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectUnionOfCodec.ObjectUnionOf memory _instance = ObjectUnionOfCodec.ObjectUnionOf(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectUnionOf(_instance);
+
+        objectunionof_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectUnionOf, hash);
+        emit ObjectUnionOfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectUnionOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectUnionOfCodec.ObjectUnionOf memory _instance = objectunionof_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectUnionOf(ObjectUnionOfCodec.ObjectUnionOf memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectUnionOfCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectUnionOf(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectUnionOfCodec.ObjectUnionOf memory _instance = ObjectUnionOfCodec.ObjectUnionOf(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectUnionOf(_instance);
+        return cid.wrapInCid(cidPrefixObjectUnionOf, _hash);
+    }
+}
+
+contract ObjectComplementOfStorage is IObjectComplementOfStorage {
+    mapping (bytes32 => ObjectComplementOfCodec.ObjectComplementOf) private objectcomplementof_hash_map;
+
+    bytes6 constant cidPrefixObjectComplementOf = 0x018380031b20;
+
+    event ObjectComplementOfStored(bytes _cid);
+
+    function storeObjectComplementOf(bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectComplementOfCodec.ObjectComplementOf memory _instance = ObjectComplementOfCodec.ObjectComplementOf(_annotations, _complementOf, _superClassExpression);
+        bytes32 hash = hashObjectComplementOf(_instance);
+
+        objectcomplementof_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectComplementOf, hash);
+        emit ObjectComplementOfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectComplementOfCodec.ObjectComplementOf memory _instance = objectcomplementof_hash_map[_hash];
+        return (_instance.annotations, _instance.complementOf, _instance.superClassExpression);
+    }
+
+    function hashObjectComplementOf(ObjectComplementOfCodec.ObjectComplementOf memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectComplementOfCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectComplementOf(bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectComplementOfCodec.ObjectComplementOf memory _instance = ObjectComplementOfCodec.ObjectComplementOf(_annotations, _complementOf, _superClassExpression);
+        bytes32 _hash = hashObjectComplementOf(_instance);
+        return cid.wrapInCid(cidPrefixObjectComplementOf, _hash);
+    }
+}
+
+contract ObjectOneOfStorage is IObjectOneOfStorage {
+    mapping (bytes32 => ObjectOneOfCodec.ObjectOneOf) private objectoneof_hash_map;
+
+    bytes6 constant cidPrefixObjectOneOf = 0x018480031b20;
+
+    event ObjectOneOfStored(bytes _cid);
+
+    function storeObjectOneOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectOneOfCodec.ObjectOneOf memory _instance = ObjectOneOfCodec.ObjectOneOf(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectOneOf(_instance);
+
+        objectoneof_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectOneOf, hash);
+        emit ObjectOneOfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectOneOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectOneOfCodec.ObjectOneOf memory _instance = objectoneof_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectOneOf(ObjectOneOfCodec.ObjectOneOf memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectOneOfCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectOneOf(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectOneOfCodec.ObjectOneOf memory _instance = ObjectOneOfCodec.ObjectOneOf(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectOneOf(_instance);
+        return cid.wrapInCid(cidPrefixObjectOneOf, _hash);
+    }
+}
+
+contract ObjectSomeValuesFromStorage is IObjectSomeValuesFromStorage {
+    mapping (bytes32 => ObjectSomeValuesFromCodec.ObjectSomeValuesFrom) private objectsomevaluesfrom_hash_map;
+
+    bytes6 constant cidPrefixObjectSomeValuesFrom = 0x018580031b20;
+
+    event ObjectSomeValuesFromStored(bytes _cid);
+
+    function storeObjectSomeValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectSomeValuesFromCodec.ObjectSomeValuesFrom memory _instance = ObjectSomeValuesFromCodec.ObjectSomeValuesFrom(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectSomeValuesFrom(_instance);
+
+        objectsomevaluesfrom_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectSomeValuesFrom, hash);
+        emit ObjectSomeValuesFromStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectSomeValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectSomeValuesFromCodec.ObjectSomeValuesFrom memory _instance = objectsomevaluesfrom_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectSomeValuesFrom(ObjectSomeValuesFromCodec.ObjectSomeValuesFrom memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectSomeValuesFromCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectSomeValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectSomeValuesFromCodec.ObjectSomeValuesFrom memory _instance = ObjectSomeValuesFromCodec.ObjectSomeValuesFrom(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectSomeValuesFrom(_instance);
+        return cid.wrapInCid(cidPrefixObjectSomeValuesFrom, _hash);
+    }
+}
+
+contract ObjectAllValuesFromStorage is IObjectAllValuesFromStorage {
+    mapping (bytes32 => ObjectAllValuesFromCodec.ObjectAllValuesFrom) private objectallvaluesfrom_hash_map;
+
+    bytes6 constant cidPrefixObjectAllValuesFrom = 0x018680031b20;
+
+    event ObjectAllValuesFromStored(bytes _cid);
+
+    function storeObjectAllValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectAllValuesFromCodec.ObjectAllValuesFrom memory _instance = ObjectAllValuesFromCodec.ObjectAllValuesFrom(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectAllValuesFrom(_instance);
+
+        objectallvaluesfrom_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectAllValuesFrom, hash);
+        emit ObjectAllValuesFromStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectAllValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectAllValuesFromCodec.ObjectAllValuesFrom memory _instance = objectallvaluesfrom_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectAllValuesFrom(ObjectAllValuesFromCodec.ObjectAllValuesFrom memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectAllValuesFromCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectAllValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectAllValuesFromCodec.ObjectAllValuesFrom memory _instance = ObjectAllValuesFromCodec.ObjectAllValuesFrom(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectAllValuesFrom(_instance);
+        return cid.wrapInCid(cidPrefixObjectAllValuesFrom, _hash);
+    }
+}
+
+contract ObjectHasValueStorage is IObjectHasValueStorage {
+    mapping (bytes32 => ObjectHasValueCodec.ObjectHasValue) private objecthasvalue_hash_map;
+
+    bytes6 constant cidPrefixObjectHasValue = 0x018780031b20;
+
+    event ObjectHasValueStored(bytes _cid);
+
+    function storeObjectHasValue(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectHasValueCodec.ObjectHasValue memory _instance = ObjectHasValueCodec.ObjectHasValue(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectHasValue(_instance);
+
+        objecthasvalue_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectHasValue, hash);
+        emit ObjectHasValueStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectHasValue(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectHasValueCodec.ObjectHasValue memory _instance = objecthasvalue_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectHasValue(ObjectHasValueCodec.ObjectHasValue memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectHasValueCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectHasValue(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectHasValueCodec.ObjectHasValue memory _instance = ObjectHasValueCodec.ObjectHasValue(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectHasValue(_instance);
+        return cid.wrapInCid(cidPrefixObjectHasValue, _hash);
+    }
+}
+
+contract ObjectHasSelfStorage is IObjectHasSelfStorage {
+    mapping (bytes32 => ObjectHasSelfCodec.ObjectHasSelf) private objecthasself_hash_map;
+
+    bytes6 constant cidPrefixObjectHasSelf = 0x018880031b20;
+
+    event ObjectHasSelfStored(bytes _cid);
+
+    function storeObjectHasSelf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectHasSelfCodec.ObjectHasSelf memory _instance = ObjectHasSelfCodec.ObjectHasSelf(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectHasSelf(_instance);
+
+        objecthasself_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectHasSelf, hash);
+        emit ObjectHasSelfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectHasSelf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectHasSelfCodec.ObjectHasSelf memory _instance = objecthasself_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectHasSelf(ObjectHasSelfCodec.ObjectHasSelf memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectHasSelfCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectHasSelf(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectHasSelfCodec.ObjectHasSelf memory _instance = ObjectHasSelfCodec.ObjectHasSelf(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectHasSelf(_instance);
+        return cid.wrapInCid(cidPrefixObjectHasSelf, _hash);
+    }
+}
+
+contract ObjectMinCardinalityStorage is IObjectMinCardinalityStorage {
+    mapping (bytes32 => ObjectMinCardinalityCodec.ObjectMinCardinality) private objectmincardinality_hash_map;
+
+    bytes6 constant cidPrefixObjectMinCardinality = 0x018980031b20;
+
+    event ObjectMinCardinalityStored(bytes _cid);
+
+    function storeObjectMinCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectMinCardinalityCodec.ObjectMinCardinality memory _instance = ObjectMinCardinalityCodec.ObjectMinCardinality(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectMinCardinality(_instance);
+
+        objectmincardinality_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectMinCardinality, hash);
+        emit ObjectMinCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectMinCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectMinCardinalityCodec.ObjectMinCardinality memory _instance = objectmincardinality_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectMinCardinality(ObjectMinCardinalityCodec.ObjectMinCardinality memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectMinCardinalityCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectMinCardinality(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectMinCardinalityCodec.ObjectMinCardinality memory _instance = ObjectMinCardinalityCodec.ObjectMinCardinality(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectMinCardinality(_instance);
+        return cid.wrapInCid(cidPrefixObjectMinCardinality, _hash);
+    }
+}
+
+contract ObjectMaxCardinalityStorage is IObjectMaxCardinalityStorage {
+    mapping (bytes32 => ObjectMaxCardinalityCodec.ObjectMaxCardinality) private objectmaxcardinality_hash_map;
+
+    bytes6 constant cidPrefixObjectMaxCardinality = 0x018a80031b20;
+
+    event ObjectMaxCardinalityStored(bytes _cid);
+
+    function storeObjectMaxCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectMaxCardinalityCodec.ObjectMaxCardinality memory _instance = ObjectMaxCardinalityCodec.ObjectMaxCardinality(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectMaxCardinality(_instance);
+
+        objectmaxcardinality_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectMaxCardinality, hash);
+        emit ObjectMaxCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectMaxCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectMaxCardinalityCodec.ObjectMaxCardinality memory _instance = objectmaxcardinality_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectMaxCardinality(ObjectMaxCardinalityCodec.ObjectMaxCardinality memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectMaxCardinalityCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectMaxCardinality(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectMaxCardinalityCodec.ObjectMaxCardinality memory _instance = ObjectMaxCardinalityCodec.ObjectMaxCardinality(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectMaxCardinality(_instance);
+        return cid.wrapInCid(cidPrefixObjectMaxCardinality, _hash);
+    }
+}
+
+contract ObjectExactCardinalityStorage is IObjectExactCardinalityStorage {
+    mapping (bytes32 => ObjectExactCardinalityCodec.ObjectExactCardinality) private objectexactcardinality_hash_map;
+
+    bytes6 constant cidPrefixObjectExactCardinality = 0x018b80031b20;
+
+    event ObjectExactCardinalityStored(bytes _cid);
+
+    function storeObjectExactCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectExactCardinalityCodec.ObjectExactCardinality memory _instance = ObjectExactCardinalityCodec.ObjectExactCardinality(_annotations, _superClassExpression);
+        bytes32 hash = hashObjectExactCardinality(_instance);
+
+        objectexactcardinality_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectExactCardinality, hash);
+        emit ObjectExactCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectExactCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectExactCardinalityCodec.ObjectExactCardinality memory _instance = objectexactcardinality_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashObjectExactCardinality(ObjectExactCardinalityCodec.ObjectExactCardinality memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectExactCardinalityCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectExactCardinality(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectExactCardinalityCodec.ObjectExactCardinality memory _instance = ObjectExactCardinalityCodec.ObjectExactCardinality(_annotations, _superClassExpression);
+        bytes32 _hash = hashObjectExactCardinality(_instance);
+        return cid.wrapInCid(cidPrefixObjectExactCardinality, _hash);
+    }
+}
+
+contract DataSomeValuesFromStorage is IDataSomeValuesFromStorage {
+    mapping (bytes32 => DataSomeValuesFromCodec.DataSomeValuesFrom) private datasomevaluesfrom_hash_map;
+
+    bytes6 constant cidPrefixDataSomeValuesFrom = 0x018c80031b20;
+
+    event DataSomeValuesFromStored(bytes _cid);
+
+    function storeDataSomeValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        DataSomeValuesFromCodec.DataSomeValuesFrom memory _instance = DataSomeValuesFromCodec.DataSomeValuesFrom(_annotations, _superClassExpression);
+        bytes32 hash = hashDataSomeValuesFrom(_instance);
+
+        datasomevaluesfrom_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixDataSomeValuesFrom, hash);
+        emit DataSomeValuesFromStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataSomeValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        DataSomeValuesFromCodec.DataSomeValuesFrom memory _instance = datasomevaluesfrom_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashDataSomeValuesFrom(DataSomeValuesFromCodec.DataSomeValuesFrom memory _instance) public view returns (bytes32) {
+        bytes memory enc = DataSomeValuesFromCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidDataSomeValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        DataSomeValuesFromCodec.DataSomeValuesFrom memory _instance = DataSomeValuesFromCodec.DataSomeValuesFrom(_annotations, _superClassExpression);
+        bytes32 _hash = hashDataSomeValuesFrom(_instance);
+        return cid.wrapInCid(cidPrefixDataSomeValuesFrom, _hash);
+    }
+}
+
+contract DataAllValuesFromStorage is IDataAllValuesFromStorage {
+    mapping (bytes32 => DataAllValuesFromCodec.DataAllValuesFrom) private dataallvaluesfrom_hash_map;
+
+    bytes6 constant cidPrefixDataAllValuesFrom = 0x018d80031b20;
+
+    event DataAllValuesFromStored(bytes _cid);
+
+    function storeDataAllValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        DataAllValuesFromCodec.DataAllValuesFrom memory _instance = DataAllValuesFromCodec.DataAllValuesFrom(_annotations, _superClassExpression);
+        bytes32 hash = hashDataAllValuesFrom(_instance);
+
+        dataallvaluesfrom_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixDataAllValuesFrom, hash);
+        emit DataAllValuesFromStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataAllValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        DataAllValuesFromCodec.DataAllValuesFrom memory _instance = dataallvaluesfrom_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashDataAllValuesFrom(DataAllValuesFromCodec.DataAllValuesFrom memory _instance) public view returns (bytes32) {
+        bytes memory enc = DataAllValuesFromCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidDataAllValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        DataAllValuesFromCodec.DataAllValuesFrom memory _instance = DataAllValuesFromCodec.DataAllValuesFrom(_annotations, _superClassExpression);
+        bytes32 _hash = hashDataAllValuesFrom(_instance);
+        return cid.wrapInCid(cidPrefixDataAllValuesFrom, _hash);
+    }
+}
+
+contract DataHasValueStorage is IDataHasValueStorage {
+    mapping (bytes32 => DataHasValueCodec.DataHasValue) private datahasvalue_hash_map;
+
+    bytes6 constant cidPrefixDataHasValue = 0x018e80031b20;
+
+    event DataHasValueStored(bytes _cid);
+
+    function storeDataHasValue(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        DataHasValueCodec.DataHasValue memory _instance = DataHasValueCodec.DataHasValue(_annotations, _superClassExpression);
+        bytes32 hash = hashDataHasValue(_instance);
+
+        datahasvalue_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixDataHasValue, hash);
+        emit DataHasValueStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataHasValue(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        DataHasValueCodec.DataHasValue memory _instance = datahasvalue_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashDataHasValue(DataHasValueCodec.DataHasValue memory _instance) public view returns (bytes32) {
+        bytes memory enc = DataHasValueCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidDataHasValue(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        DataHasValueCodec.DataHasValue memory _instance = DataHasValueCodec.DataHasValue(_annotations, _superClassExpression);
+        bytes32 _hash = hashDataHasValue(_instance);
+        return cid.wrapInCid(cidPrefixDataHasValue, _hash);
+    }
+}
+
+contract DataMinCardinalityStorage is IDataMinCardinalityStorage {
+    mapping (bytes32 => DataMinCardinalityCodec.DataMinCardinality) private datamincardinality_hash_map;
+
+    bytes6 constant cidPrefixDataMinCardinality = 0x018f80031b20;
+
+    event DataMinCardinalityStored(bytes _cid);
+
+    function storeDataMinCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        DataMinCardinalityCodec.DataMinCardinality memory _instance = DataMinCardinalityCodec.DataMinCardinality(_annotations, _superClassExpression);
+        bytes32 hash = hashDataMinCardinality(_instance);
+
+        datamincardinality_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixDataMinCardinality, hash);
+        emit DataMinCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataMinCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        DataMinCardinalityCodec.DataMinCardinality memory _instance = datamincardinality_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashDataMinCardinality(DataMinCardinalityCodec.DataMinCardinality memory _instance) public view returns (bytes32) {
+        bytes memory enc = DataMinCardinalityCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidDataMinCardinality(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        DataMinCardinalityCodec.DataMinCardinality memory _instance = DataMinCardinalityCodec.DataMinCardinality(_annotations, _superClassExpression);
+        bytes32 _hash = hashDataMinCardinality(_instance);
+        return cid.wrapInCid(cidPrefixDataMinCardinality, _hash);
+    }
+}
+
+contract DataMaxCardinalityStorage is IDataMaxCardinalityStorage {
+    mapping (bytes32 => DataMaxCardinalityCodec.DataMaxCardinality) private datamaxcardinality_hash_map;
+
+    bytes6 constant cidPrefixDataMaxCardinality = 0x019080031b20;
+
+    event DataMaxCardinalityStored(bytes _cid);
+
+    function storeDataMaxCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        DataMaxCardinalityCodec.DataMaxCardinality memory _instance = DataMaxCardinalityCodec.DataMaxCardinality(_annotations, _superClassExpression);
+        bytes32 hash = hashDataMaxCardinality(_instance);
+
+        datamaxcardinality_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixDataMaxCardinality, hash);
+        emit DataMaxCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataMaxCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        DataMaxCardinalityCodec.DataMaxCardinality memory _instance = datamaxcardinality_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashDataMaxCardinality(DataMaxCardinalityCodec.DataMaxCardinality memory _instance) public view returns (bytes32) {
+        bytes memory enc = DataMaxCardinalityCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidDataMaxCardinality(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        DataMaxCardinalityCodec.DataMaxCardinality memory _instance = DataMaxCardinalityCodec.DataMaxCardinality(_annotations, _superClassExpression);
+        bytes32 _hash = hashDataMaxCardinality(_instance);
+        return cid.wrapInCid(cidPrefixDataMaxCardinality, _hash);
+    }
+}
+
+contract DataExactCardinalityStorage is IDataExactCardinalityStorage {
+    mapping (bytes32 => DataExactCardinalityCodec.DataExactCardinality) private dataexactcardinality_hash_map;
+
+    bytes6 constant cidPrefixDataExactCardinality = 0x019180031b20;
+
+    event DataExactCardinalityStored(bytes _cid);
+
+    function storeDataExactCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        DataExactCardinalityCodec.DataExactCardinality memory _instance = DataExactCardinalityCodec.DataExactCardinality(_annotations, _superClassExpression);
+        bytes32 hash = hashDataExactCardinality(_instance);
+
+        dataexactcardinality_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixDataExactCardinality, hash);
+        emit DataExactCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataExactCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        DataExactCardinalityCodec.DataExactCardinality memory _instance = dataexactcardinality_hash_map[_hash];
+        return (_instance.annotations, _instance.superClassExpression);
+    }
+
+    function hashDataExactCardinality(DataExactCardinalityCodec.DataExactCardinality memory _instance) public view returns (bytes32) {
+        bytes memory enc = DataExactCardinalityCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidDataExactCardinality(bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        DataExactCardinalityCodec.DataExactCardinality memory _instance = DataExactCardinalityCodec.DataExactCardinality(_annotations, _superClassExpression);
+        bytes32 _hash = hashDataExactCardinality(_instance);
+        return cid.wrapInCid(cidPrefixDataExactCardinality, _hash);
+    }
+}
+
+contract ObjectPropertyStorage is IObjectPropertyStorage {
+    mapping (bytes32 => ObjectPropertyCodec.ObjectProperty) private objectproperty_hash_map;
+
+    bytes6 constant cidPrefixObjectProperty = 0x019280031b20;
+
+    event ObjectPropertyStored(bytes _cid);
+
+    function storeObjectProperty(bytes[] _annotations, bytes[] _superObjectPropertyExpression) public returns (bytes) {
+        ObjectPropertyCodec.ObjectProperty memory _instance = ObjectPropertyCodec.ObjectProperty(_annotations, _superObjectPropertyExpression);
+        bytes32 hash = hashObjectProperty(_instance);
+
+        objectproperty_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectProperty, hash);
+        emit ObjectPropertyStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superObjectPropertyExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectPropertyCodec.ObjectProperty memory _instance = objectproperty_hash_map[_hash];
+        return (_instance.annotations, _instance.superObjectPropertyExpression);
+    }
+
+    function hashObjectProperty(ObjectPropertyCodec.ObjectProperty memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectPropertyCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectProperty(bytes[] _annotations, bytes[] _superObjectPropertyExpression) public view returns (bytes _cid) {
+        ObjectPropertyCodec.ObjectProperty memory _instance = ObjectPropertyCodec.ObjectProperty(_annotations, _superObjectPropertyExpression);
+        bytes32 _hash = hashObjectProperty(_instance);
+        return cid.wrapInCid(cidPrefixObjectProperty, _hash);
+    }
+}
+
+contract InverseObjectPropertyStorage is IInverseObjectPropertyStorage {
+    mapping (bytes32 => InverseObjectPropertyCodec.InverseObjectProperty) private inverseobjectproperty_hash_map;
+
+    bytes6 constant cidPrefixInverseObjectProperty = 0x019380031b20;
+
+    event InverseObjectPropertyStored(bytes _cid);
+
+    function storeInverseObjectProperty(bytes[] _annotations, bytes[] _superObjectPropertyExpression) public returns (bytes) {
+        InverseObjectPropertyCodec.InverseObjectProperty memory _instance = InverseObjectPropertyCodec.InverseObjectProperty(_annotations, _superObjectPropertyExpression);
+        bytes32 hash = hashInverseObjectProperty(_instance);
+
+        inverseobjectproperty_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixInverseObjectProperty, hash);
+        emit InverseObjectPropertyStored(_cid);
+        return _cid;
+    }
+
+    function retrieveInverseObjectProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superObjectPropertyExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        InverseObjectPropertyCodec.InverseObjectProperty memory _instance = inverseobjectproperty_hash_map[_hash];
+        return (_instance.annotations, _instance.superObjectPropertyExpression);
+    }
+
+    function hashInverseObjectProperty(InverseObjectPropertyCodec.InverseObjectProperty memory _instance) public view returns (bytes32) {
+        bytes memory enc = InverseObjectPropertyCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidInverseObjectProperty(bytes[] _annotations, bytes[] _superObjectPropertyExpression) public view returns (bytes _cid) {
+        InverseObjectPropertyCodec.InverseObjectProperty memory _instance = InverseObjectPropertyCodec.InverseObjectProperty(_annotations, _superObjectPropertyExpression);
+        bytes32 _hash = hashInverseObjectProperty(_instance);
+        return cid.wrapInCid(cidPrefixInverseObjectProperty, _hash);
+    }
+}
+
+contract DataPropertyStorage is IDataPropertyStorage {
+    mapping (bytes32 => DataPropertyCodec.DataProperty) private dataproperty_hash_map;
+
+    bytes6 constant cidPrefixDataProperty = 0x019480031b20;
+
+    event DataPropertyStored(bytes _cid);
+
+    function storeDataProperty(bytes[] _annotations, bytes[] _superDataPropertyExpression) public returns (bytes) {
+        DataPropertyCodec.DataProperty memory _instance = DataPropertyCodec.DataProperty(_annotations, _superDataPropertyExpression);
+        bytes32 hash = hashDataProperty(_instance);
+
+        dataproperty_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixDataProperty, hash);
+        emit DataPropertyStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superDataPropertyExpression) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        DataPropertyCodec.DataProperty memory _instance = dataproperty_hash_map[_hash];
+        return (_instance.annotations, _instance.superDataPropertyExpression);
+    }
+
+    function hashDataProperty(DataPropertyCodec.DataProperty memory _instance) public view returns (bytes32) {
+        bytes memory enc = DataPropertyCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidDataProperty(bytes[] _annotations, bytes[] _superDataPropertyExpression) public view returns (bytes _cid) {
+        DataPropertyCodec.DataProperty memory _instance = DataPropertyCodec.DataProperty(_annotations, _superDataPropertyExpression);
+        bytes32 _hash = hashDataProperty(_instance);
+        return cid.wrapInCid(cidPrefixDataProperty, _hash);
+    }
+}
+
+contract AnnotationStorage is IAnnotationStorage {
+    mapping (bytes32 => AnnotationCodec.Annotation) private annotation_hash_map;
+
+    bytes6 constant cidPrefixAnnotation = 0x019580031b20;
+
+    event AnnotationStored(bytes _cid);
+
+    function storeAnnotation(bytes[] _annotations, bytes _property, bytes _value) public returns (bytes) {
+        AnnotationCodec.Annotation memory _instance = AnnotationCodec.Annotation(_annotations, _property, _value);
+        bytes32 hash = hashAnnotation(_instance);
+
+        annotation_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixAnnotation, hash);
+        emit AnnotationStored(_cid);
+        return _cid;
+    }
+
+    function retrieveAnnotation(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _value) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        AnnotationCodec.Annotation memory _instance = annotation_hash_map[_hash];
+        return (_instance.annotations, _instance.property, _instance.value);
+    }
+
+    function hashAnnotation(AnnotationCodec.Annotation memory _instance) public view returns (bytes32) {
+        bytes memory enc = AnnotationCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidAnnotation(bytes[] _annotations, bytes _property, bytes _value) public view returns (bytes _cid) {
+        AnnotationCodec.Annotation memory _instance = AnnotationCodec.Annotation(_annotations, _property, _value);
+        bytes32 _hash = hashAnnotation(_instance);
+        return cid.wrapInCid(cidPrefixAnnotation, _hash);
+    }
+}
+
+contract IndividualStorage is IIndividualStorage {
+    mapping (bytes32 => IndividualCodec.Individual) private individual_hash_map;
+
+    bytes6 constant cidPrefixIndividual = 0x019680031b20;
+
+    event IndividualStored(bytes _cid);
+
+    function storeIndividual(bytes[] _annotations) public returns (bytes) {
+        IndividualCodec.Individual memory _instance = IndividualCodec.Individual(_annotations);
+        bytes32 hash = hashIndividual(_instance);
+
+        individual_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixIndividual, hash);
+        emit IndividualStored(_cid);
+        return _cid;
+    }
+
+    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        IndividualCodec.Individual memory _instance = individual_hash_map[_hash];
+        return (_instance.annotations);
+    }
+
+    function hashIndividual(IndividualCodec.Individual memory _instance) public view returns (bytes32) {
+        bytes memory enc = IndividualCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidIndividual(bytes[] _annotations) public view returns (bytes _cid) {
+        IndividualCodec.Individual memory _instance = IndividualCodec.Individual(_annotations);
+        bytes32 _hash = hashIndividual(_instance);
+        return cid.wrapInCid(cidPrefixIndividual, _hash);
+    }
+}
+
+contract AnnotationPropertyStorage is IAnnotationPropertyStorage {
+    mapping (bytes32 => AnnotationPropertyCodec.AnnotationProperty) private annotationproperty_hash_map;
+
+    bytes6 constant cidPrefixAnnotationProperty = 0x019780031b20;
+
+    event AnnotationPropertyStored(bytes _cid);
+
+    function storeAnnotationProperty(bytes[] _annotations) public returns (bytes) {
+        AnnotationPropertyCodec.AnnotationProperty memory _instance = AnnotationPropertyCodec.AnnotationProperty(_annotations);
+        bytes32 hash = hashAnnotationProperty(_instance);
+
+        annotationproperty_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixAnnotationProperty, hash);
+        emit AnnotationPropertyStored(_cid);
+        return _cid;
+    }
+
+    function retrieveAnnotationProperty(bytes _cid) external view returns (bytes[] _annotations) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        AnnotationPropertyCodec.AnnotationProperty memory _instance = annotationproperty_hash_map[_hash];
+        return (_instance.annotations);
+    }
+
+    function hashAnnotationProperty(AnnotationPropertyCodec.AnnotationProperty memory _instance) public view returns (bytes32) {
+        bytes memory enc = AnnotationPropertyCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidAnnotationProperty(bytes[] _annotations) public view returns (bytes _cid) {
+        AnnotationPropertyCodec.AnnotationProperty memory _instance = AnnotationPropertyCodec.AnnotationProperty(_annotations);
+        bytes32 _hash = hashAnnotationProperty(_instance);
+        return cid.wrapInCid(cidPrefixAnnotationProperty, _hash);
+    }
+}
+
+contract ClassAssertionStorage is IClassAssertionStorage {
+    mapping (bytes32 => ClassAssertionCodec.ClassAssertion) private classassertion_hash_map;
+
+    bytes6 constant cidPrefixClassAssertion = 0x019880031b20;
+
+    event ClassAssertionStored(bytes _cid);
+
+    function storeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes) {
+        ClassAssertionCodec.ClassAssertion memory _instance = ClassAssertionCodec.ClassAssertion(_annotations, _class, _subject);
+        bytes32 hash = hashClassAssertion(_instance);
+
+        classassertion_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixClassAssertion, hash);
+        emit ClassAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ClassAssertionCodec.ClassAssertion memory _instance = classassertion_hash_map[_hash];
+        return (_instance.annotations, _instance.class, _instance.subject);
+    }
+
+    function hashClassAssertion(ClassAssertionCodec.ClassAssertion memory _instance) public view returns (bytes32) {
+        bytes memory enc = ClassAssertionCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public view returns (bytes _cid) {
+        ClassAssertionCodec.ClassAssertion memory _instance = ClassAssertionCodec.ClassAssertion(_annotations, _class, _subject);
+        bytes32 _hash = hashClassAssertion(_instance);
+        return cid.wrapInCid(cidPrefixClassAssertion, _hash);
+    }
+}
+
+contract NegativeClassAssertionStorage is INegativeClassAssertionStorage {
+    mapping (bytes32 => NegativeClassAssertionCodec.NegativeClassAssertion) private negativeclassassertion_hash_map;
+
+    bytes6 constant cidPrefixNegativeClassAssertion = 0x019980031b20;
+
+    event NegativeClassAssertionStored(bytes _cid);
+
+    function storeNegativeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes) {
+        NegativeClassAssertionCodec.NegativeClassAssertion memory _instance = NegativeClassAssertionCodec.NegativeClassAssertion(_annotations, _class, _subject);
+        bytes32 hash = hashNegativeClassAssertion(_instance);
+
+        negativeclassassertion_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixNegativeClassAssertion, hash);
+        emit NegativeClassAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        NegativeClassAssertionCodec.NegativeClassAssertion memory _instance = negativeclassassertion_hash_map[_hash];
+        return (_instance.annotations, _instance.class, _instance.subject);
+    }
+
+    function hashNegativeClassAssertion(NegativeClassAssertionCodec.NegativeClassAssertion memory _instance) public view returns (bytes32) {
+        bytes memory enc = NegativeClassAssertionCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidNegativeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public view returns (bytes _cid) {
+        NegativeClassAssertionCodec.NegativeClassAssertion memory _instance = NegativeClassAssertionCodec.NegativeClassAssertion(_annotations, _class, _subject);
+        bytes32 _hash = hashNegativeClassAssertion(_instance);
+        return cid.wrapInCid(cidPrefixNegativeClassAssertion, _hash);
+    }
+}
+
+contract ObjectPropertyAssertionStorage is IObjectPropertyAssertionStorage {
+    mapping (bytes32 => ObjectPropertyAssertionCodec.ObjectPropertyAssertion) private objectpropertyassertion_hash_map;
+
+    bytes6 constant cidPrefixObjectPropertyAssertion = 0x019a80031b20;
+
+    event ObjectPropertyAssertionStored(bytes _cid);
+
+    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
+        ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance = ObjectPropertyAssertionCodec.ObjectPropertyAssertion(_annotations, _property, _subject, _target);
+        bytes32 hash = hashObjectPropertyAssertion(_instance);
+
+        objectpropertyassertion_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixObjectPropertyAssertion, hash);
+        emit ObjectPropertyAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance = objectpropertyassertion_hash_map[_hash];
+        return (_instance.annotations, _instance.property, _instance.subject, _instance.target);
+    }
+
+    function hashObjectPropertyAssertion(ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance) public view returns (bytes32) {
+        bytes memory enc = ObjectPropertyAssertionCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public view returns (bytes _cid) {
+        ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance = ObjectPropertyAssertionCodec.ObjectPropertyAssertion(_annotations, _property, _subject, _target);
+        bytes32 _hash = hashObjectPropertyAssertion(_instance);
+        return cid.wrapInCid(cidPrefixObjectPropertyAssertion, _hash);
+    }
+}
+
+contract NegativeObjectPropertyAssertionStorage is INegativeObjectPropertyAssertionStorage {
+    mapping (bytes32 => NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion) private negativeobjectpropertyassertion_hash_map;
+
+    bytes6 constant cidPrefixNegativeObjectPropertyAssertion = 0x019b80031b20;
+
+    event NegativeObjectPropertyAssertionStored(bytes _cid);
+
+    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
+        NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance = NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion(_annotations, _property, _subject, _target);
+        bytes32 hash = hashNegativeObjectPropertyAssertion(_instance);
+
+        negativeobjectpropertyassertion_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixNegativeObjectPropertyAssertion, hash);
+        emit NegativeObjectPropertyAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance = negativeobjectpropertyassertion_hash_map[_hash];
+        return (_instance.annotations, _instance.property, _instance.subject, _instance.target);
+    }
+
+    function hashNegativeObjectPropertyAssertion(NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance) public view returns (bytes32) {
+        bytes memory enc = NegativeObjectPropertyAssertionCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public view returns (bytes _cid) {
+        NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance = NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion(_annotations, _property, _subject, _target);
+        bytes32 _hash = hashNegativeObjectPropertyAssertion(_instance);
+        return cid.wrapInCid(cidPrefixNegativeObjectPropertyAssertion, _hash);
+    }
+}
+
+contract DataPropertyAssertionStorage is IDataPropertyAssertionStorage {
+    mapping (bytes32 => DataPropertyAssertionCodec.DataPropertyAssertion) private datapropertyassertion_hash_map;
+
+    bytes6 constant cidPrefixDataPropertyAssertion = 0x019c80031b20;
+
+    event DataPropertyAssertionStored(bytes _cid);
+
+    function storeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
+        DataPropertyAssertionCodec.DataPropertyAssertion memory _instance = DataPropertyAssertionCodec.DataPropertyAssertion(_annotations, _property, _subject, _target);
+        bytes32 hash = hashDataPropertyAssertion(_instance);
+
+        datapropertyassertion_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixDataPropertyAssertion, hash);
+        emit DataPropertyAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        DataPropertyAssertionCodec.DataPropertyAssertion memory _instance = datapropertyassertion_hash_map[_hash];
+        return (_instance.annotations, _instance.property, _instance.subject, _instance.target);
+    }
+
+    function hashDataPropertyAssertion(DataPropertyAssertionCodec.DataPropertyAssertion memory _instance) public view returns (bytes32) {
+        bytes memory enc = DataPropertyAssertionCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public view returns (bytes _cid) {
+        DataPropertyAssertionCodec.DataPropertyAssertion memory _instance = DataPropertyAssertionCodec.DataPropertyAssertion(_annotations, _property, _subject, _target);
+        bytes32 _hash = hashDataPropertyAssertion(_instance);
+        return cid.wrapInCid(cidPrefixDataPropertyAssertion, _hash);
+    }
+}
+
+contract NegativeDataPropertyAssertionStorage is INegativeDataPropertyAssertionStorage {
+    mapping (bytes32 => NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion) private negativedatapropertyassertion_hash_map;
+
+    bytes6 constant cidPrefixNegativeDataPropertyAssertion = 0x019d80031b20;
+
+    event NegativeDataPropertyAssertionStored(bytes _cid);
+
+    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
+        NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance = NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion(_annotations, _property, _subject, _target);
+        bytes32 hash = hashNegativeDataPropertyAssertion(_instance);
+
+        negativedatapropertyassertion_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixNegativeDataPropertyAssertion, hash);
+        emit NegativeDataPropertyAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance = negativedatapropertyassertion_hash_map[_hash];
+        return (_instance.annotations, _instance.property, _instance.subject, _instance.target);
+    }
+
+    function hashNegativeDataPropertyAssertion(NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance) public view returns (bytes32) {
+        bytes memory enc = NegativeDataPropertyAssertionCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidNegativeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public view returns (bytes _cid) {
+        NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance = NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion(_annotations, _property, _subject, _target);
+        bytes32 _hash = hashNegativeDataPropertyAssertion(_instance);
+        return cid.wrapInCid(cidPrefixNegativeDataPropertyAssertion, _hash);
+    }
+}
+
+contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObjectUnionOfStorage, IObjectComplementOfStorage, IObjectOneOfStorage, IObjectSomeValuesFromStorage, IObjectAllValuesFromStorage, IObjectHasValueStorage, IObjectHasSelfStorage, IObjectMinCardinalityStorage, IObjectMaxCardinalityStorage, IObjectExactCardinalityStorage, IDataSomeValuesFromStorage, IDataAllValuesFromStorage, IDataHasValueStorage, IDataMinCardinalityStorage, IDataMaxCardinalityStorage, IDataExactCardinalityStorage, IObjectPropertyStorage, IInverseObjectPropertyStorage, IDataPropertyStorage, IAnnotationStorage, IIndividualStorage, IAnnotationPropertyStorage, IClassAssertionStorage, INegativeClassAssertionStorage, IObjectPropertyAssertionStorage, INegativeObjectPropertyAssertionStorage, IDataPropertyAssertionStorage, INegativeDataPropertyAssertionStorage{
+    IClassStorage public class_storage;
+    IObjectIntersectionOfStorage public objectintersectionof_storage;
+    IObjectUnionOfStorage public objectunionof_storage;
+    IObjectComplementOfStorage public objectcomplementof_storage;
+    IObjectOneOfStorage public objectoneof_storage;
+    IObjectSomeValuesFromStorage public objectsomevaluesfrom_storage;
+    IObjectAllValuesFromStorage public objectallvaluesfrom_storage;
+    IObjectHasValueStorage public objecthasvalue_storage;
+    IObjectHasSelfStorage public objecthasself_storage;
+    IObjectMinCardinalityStorage public objectmincardinality_storage;
+    IObjectMaxCardinalityStorage public objectmaxcardinality_storage;
+    IObjectExactCardinalityStorage public objectexactcardinality_storage;
+    IDataSomeValuesFromStorage public datasomevaluesfrom_storage;
+    IDataAllValuesFromStorage public dataallvaluesfrom_storage;
+    IDataHasValueStorage public datahasvalue_storage;
+    IDataMinCardinalityStorage public datamincardinality_storage;
+    IDataMaxCardinalityStorage public datamaxcardinality_storage;
+    IDataExactCardinalityStorage public dataexactcardinality_storage;
+    IObjectPropertyStorage public objectproperty_storage;
+    IInverseObjectPropertyStorage public inverseobjectproperty_storage;
+    IDataPropertyStorage public dataproperty_storage;
+    IAnnotationStorage public annotation_storage;
+    IIndividualStorage public individual_storage;
+    IAnnotationPropertyStorage public annotationproperty_storage;
+    IClassAssertionStorage public classassertion_storage;
+    INegativeClassAssertionStorage public negativeclassassertion_storage;
+    IObjectPropertyAssertionStorage public objectpropertyassertion_storage;
+    INegativeObjectPropertyAssertionStorage public negativeobjectpropertyassertion_storage;
+    IDataPropertyAssertionStorage public datapropertyassertion_storage;
+    INegativeDataPropertyAssertionStorage public negativedatapropertyassertion_storage;
+
+    event ClassStored(bytes _cid);
+    event ObjectIntersectionOfStored(bytes _cid);
+    event ObjectUnionOfStored(bytes _cid);
+    event ObjectComplementOfStored(bytes _cid);
+    event ObjectOneOfStored(bytes _cid);
+    event ObjectSomeValuesFromStored(bytes _cid);
+    event ObjectAllValuesFromStored(bytes _cid);
+    event ObjectHasValueStored(bytes _cid);
+    event ObjectHasSelfStored(bytes _cid);
+    event ObjectMinCardinalityStored(bytes _cid);
+    event ObjectMaxCardinalityStored(bytes _cid);
+    event ObjectExactCardinalityStored(bytes _cid);
+    event DataSomeValuesFromStored(bytes _cid);
+    event DataAllValuesFromStored(bytes _cid);
+    event DataHasValueStored(bytes _cid);
+    event DataMinCardinalityStored(bytes _cid);
+    event DataMaxCardinalityStored(bytes _cid);
+    event DataExactCardinalityStored(bytes _cid);
+    event ObjectPropertyStored(bytes _cid);
+    event InverseObjectPropertyStored(bytes _cid);
+    event DataPropertyStored(bytes _cid);
+    event AnnotationStored(bytes _cid);
+    event IndividualStored(bytes _cid);
+    event AnnotationPropertyStored(bytes _cid);
+    event ClassAssertionStored(bytes _cid);
+    event NegativeClassAssertionStored(bytes _cid);
+    event ObjectPropertyAssertionStored(bytes _cid);
+    event NegativeObjectPropertyAssertionStored(bytes _cid);
+    event DataPropertyAssertionStored(bytes _cid);
+    event NegativeDataPropertyAssertionStored(bytes _cid);
+
+    constructor(address[] _storage_delegate_addrs) {
+        class_storage = IClassStorage(_storage_delegate_addrs[0]);
+        objectintersectionof_storage = IObjectIntersectionOfStorage(_storage_delegate_addrs[1]);
+        objectunionof_storage = IObjectUnionOfStorage(_storage_delegate_addrs[2]);
+        objectcomplementof_storage = IObjectComplementOfStorage(_storage_delegate_addrs[3]);
+        objectoneof_storage = IObjectOneOfStorage(_storage_delegate_addrs[4]);
+        objectsomevaluesfrom_storage = IObjectSomeValuesFromStorage(_storage_delegate_addrs[5]);
+        objectallvaluesfrom_storage = IObjectAllValuesFromStorage(_storage_delegate_addrs[6]);
+        objecthasvalue_storage = IObjectHasValueStorage(_storage_delegate_addrs[7]);
+        objecthasself_storage = IObjectHasSelfStorage(_storage_delegate_addrs[8]);
+        objectmincardinality_storage = IObjectMinCardinalityStorage(_storage_delegate_addrs[9]);
+        objectmaxcardinality_storage = IObjectMaxCardinalityStorage(_storage_delegate_addrs[10]);
+        objectexactcardinality_storage = IObjectExactCardinalityStorage(_storage_delegate_addrs[11]);
+        datasomevaluesfrom_storage = IDataSomeValuesFromStorage(_storage_delegate_addrs[12]);
+        dataallvaluesfrom_storage = IDataAllValuesFromStorage(_storage_delegate_addrs[13]);
+        datahasvalue_storage = IDataHasValueStorage(_storage_delegate_addrs[14]);
+        datamincardinality_storage = IDataMinCardinalityStorage(_storage_delegate_addrs[15]);
+        datamaxcardinality_storage = IDataMaxCardinalityStorage(_storage_delegate_addrs[16]);
+        dataexactcardinality_storage = IDataExactCardinalityStorage(_storage_delegate_addrs[17]);
+        objectproperty_storage = IObjectPropertyStorage(_storage_delegate_addrs[18]);
+        inverseobjectproperty_storage = IInverseObjectPropertyStorage(_storage_delegate_addrs[19]);
+        dataproperty_storage = IDataPropertyStorage(_storage_delegate_addrs[20]);
+        annotation_storage = IAnnotationStorage(_storage_delegate_addrs[21]);
+        individual_storage = IIndividualStorage(_storage_delegate_addrs[22]);
+        annotationproperty_storage = IAnnotationPropertyStorage(_storage_delegate_addrs[23]);
+        classassertion_storage = IClassAssertionStorage(_storage_delegate_addrs[24]);
+        negativeclassassertion_storage = INegativeClassAssertionStorage(_storage_delegate_addrs[25]);
+        objectpropertyassertion_storage = IObjectPropertyAssertionStorage(_storage_delegate_addrs[26]);
+        negativeobjectpropertyassertion_storage = INegativeObjectPropertyAssertionStorage(_storage_delegate_addrs[27]);
+        datapropertyassertion_storage = IDataPropertyAssertionStorage(_storage_delegate_addrs[28]);
+        negativedatapropertyassertion_storage = INegativeDataPropertyAssertionStorage(_storage_delegate_addrs[29]);
+    }
+
+    function storeClass(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = class_storage.storeClass(_annotations, _superClassExpression);
+        emit ClassStored(_cid);
+        return _cid;
+    }
+
+    function retrieveClass(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return class_storage.retrieveClass(_cid);
+    }
+
+    function storeObjectIntersectionOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectintersectionof_storage.storeObjectIntersectionOf(_annotations, _superClassExpression);
+        emit ObjectIntersectionOfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectIntersectionOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objectintersectionof_storage.retrieveObjectIntersectionOf(_cid);
+    }
+
+    function storeObjectUnionOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectunionof_storage.storeObjectUnionOf(_annotations, _superClassExpression);
+        emit ObjectUnionOfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectUnionOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objectunionof_storage.retrieveObjectUnionOf(_cid);
+    }
+
+    function storeObjectComplementOf(bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectcomplementof_storage.storeObjectComplementOf(_annotations, _complementOf, _superClassExpression);
+        emit ObjectComplementOfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) {
+        return objectcomplementof_storage.retrieveObjectComplementOf(_cid);
+    }
+
+    function storeObjectOneOf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectoneof_storage.storeObjectOneOf(_annotations, _superClassExpression);
+        emit ObjectOneOfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectOneOf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objectoneof_storage.retrieveObjectOneOf(_cid);
+    }
+
+    function storeObjectSomeValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectsomevaluesfrom_storage.storeObjectSomeValuesFrom(_annotations, _superClassExpression);
+        emit ObjectSomeValuesFromStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectSomeValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objectsomevaluesfrom_storage.retrieveObjectSomeValuesFrom(_cid);
+    }
+
+    function storeObjectAllValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectallvaluesfrom_storage.storeObjectAllValuesFrom(_annotations, _superClassExpression);
+        emit ObjectAllValuesFromStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectAllValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objectallvaluesfrom_storage.retrieveObjectAllValuesFrom(_cid);
+    }
+
+    function storeObjectHasValue(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objecthasvalue_storage.storeObjectHasValue(_annotations, _superClassExpression);
+        emit ObjectHasValueStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectHasValue(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objecthasvalue_storage.retrieveObjectHasValue(_cid);
+    }
+
+    function storeObjectHasSelf(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objecthasself_storage.storeObjectHasSelf(_annotations, _superClassExpression);
+        emit ObjectHasSelfStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectHasSelf(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objecthasself_storage.retrieveObjectHasSelf(_cid);
+    }
+
+    function storeObjectMinCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectmincardinality_storage.storeObjectMinCardinality(_annotations, _superClassExpression);
+        emit ObjectMinCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectMinCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objectmincardinality_storage.retrieveObjectMinCardinality(_cid);
+    }
+
+    function storeObjectMaxCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectmaxcardinality_storage.storeObjectMaxCardinality(_annotations, _superClassExpression);
+        emit ObjectMaxCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectMaxCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objectmaxcardinality_storage.retrieveObjectMaxCardinality(_cid);
+    }
+
+    function storeObjectExactCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectexactcardinality_storage.storeObjectExactCardinality(_annotations, _superClassExpression);
+        emit ObjectExactCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectExactCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return objectexactcardinality_storage.retrieveObjectExactCardinality(_cid);
+    }
+
+    function storeDataSomeValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = datasomevaluesfrom_storage.storeDataSomeValuesFrom(_annotations, _superClassExpression);
+        emit DataSomeValuesFromStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataSomeValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return datasomevaluesfrom_storage.retrieveDataSomeValuesFrom(_cid);
+    }
+
+    function storeDataAllValuesFrom(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = dataallvaluesfrom_storage.storeDataAllValuesFrom(_annotations, _superClassExpression);
+        emit DataAllValuesFromStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataAllValuesFrom(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return dataallvaluesfrom_storage.retrieveDataAllValuesFrom(_cid);
+    }
+
+    function storeDataHasValue(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = datahasvalue_storage.storeDataHasValue(_annotations, _superClassExpression);
+        emit DataHasValueStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataHasValue(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return datahasvalue_storage.retrieveDataHasValue(_cid);
+    }
+
+    function storeDataMinCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = datamincardinality_storage.storeDataMinCardinality(_annotations, _superClassExpression);
+        emit DataMinCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataMinCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return datamincardinality_storage.retrieveDataMinCardinality(_cid);
+    }
+
+    function storeDataMaxCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = datamaxcardinality_storage.storeDataMaxCardinality(_annotations, _superClassExpression);
+        emit DataMaxCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataMaxCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return datamaxcardinality_storage.retrieveDataMaxCardinality(_cid);
+    }
+
+    function storeDataExactCardinality(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = dataexactcardinality_storage.storeDataExactCardinality(_annotations, _superClassExpression);
+        emit DataExactCardinalityStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataExactCardinality(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superClassExpression) {
+        return dataexactcardinality_storage.retrieveDataExactCardinality(_cid);
+    }
+
+    function storeObjectProperty(bytes[] _annotations, bytes[] _superObjectPropertyExpression) public returns (bytes) {
+        bytes memory _cid = objectproperty_storage.storeObjectProperty(_annotations, _superObjectPropertyExpression);
+        emit ObjectPropertyStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superObjectPropertyExpression) {
+        return objectproperty_storage.retrieveObjectProperty(_cid);
+    }
+
+    function storeInverseObjectProperty(bytes[] _annotations, bytes[] _superObjectPropertyExpression) public returns (bytes) {
+        bytes memory _cid = inverseobjectproperty_storage.storeInverseObjectProperty(_annotations, _superObjectPropertyExpression);
+        emit InverseObjectPropertyStored(_cid);
+        return _cid;
+    }
+
+    function retrieveInverseObjectProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superObjectPropertyExpression) {
+        return inverseobjectproperty_storage.retrieveInverseObjectProperty(_cid);
+    }
+
+    function storeDataProperty(bytes[] _annotations, bytes[] _superDataPropertyExpression) public returns (bytes) {
+        bytes memory _cid = dataproperty_storage.storeDataProperty(_annotations, _superDataPropertyExpression);
+        emit DataPropertyStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataProperty(bytes _cid) external view returns (bytes[] _annotations, bytes[] _superDataPropertyExpression) {
+        return dataproperty_storage.retrieveDataProperty(_cid);
+    }
+
+    function storeAnnotation(bytes[] _annotations, bytes _property, bytes _value) public returns (bytes) {
+        bytes memory _cid = annotation_storage.storeAnnotation(_annotations, _property, _value);
+        emit AnnotationStored(_cid);
+        return _cid;
+    }
+
+    function retrieveAnnotation(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _value) {
+        return annotation_storage.retrieveAnnotation(_cid);
+    }
+
+    function storeIndividual(bytes[] _annotations) public returns (bytes) {
+        bytes memory _cid = individual_storage.storeIndividual(_annotations);
+        emit IndividualStored(_cid);
+        return _cid;
+    }
+
+    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations) {
+        return individual_storage.retrieveIndividual(_cid);
+    }
+
+    function storeAnnotationProperty(bytes[] _annotations) public returns (bytes) {
+        bytes memory _cid = annotationproperty_storage.storeAnnotationProperty(_annotations);
+        emit AnnotationPropertyStored(_cid);
+        return _cid;
+    }
+
+    function retrieveAnnotationProperty(bytes _cid) external view returns (bytes[] _annotations) {
+        return annotationproperty_storage.retrieveAnnotationProperty(_cid);
+    }
+
+    function storeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes) {
+        bytes memory _cid = classassertion_storage.storeClassAssertion(_annotations, _class, _subject);
+        emit ClassAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject) {
+        return classassertion_storage.retrieveClassAssertion(_cid);
+    }
+
+    function storeNegativeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes) {
+        bytes memory _cid = negativeclassassertion_storage.storeNegativeClassAssertion(_annotations, _class, _subject);
+        emit NegativeClassAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject) {
+        return negativeclassassertion_storage.retrieveNegativeClassAssertion(_cid);
+    }
+
+    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
+        bytes memory _cid = objectpropertyassertion_storage.storeObjectPropertyAssertion(_annotations, _property, _subject, _target);
+        emit ObjectPropertyAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+        return objectpropertyassertion_storage.retrieveObjectPropertyAssertion(_cid);
+    }
+
+    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
+        bytes memory _cid = negativeobjectpropertyassertion_storage.storeNegativeObjectPropertyAssertion(_annotations, _property, _subject, _target);
+        emit NegativeObjectPropertyAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+        return negativeobjectpropertyassertion_storage.retrieveNegativeObjectPropertyAssertion(_cid);
+    }
+
+    function storeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
+        bytes memory _cid = datapropertyassertion_storage.storeDataPropertyAssertion(_annotations, _property, _subject, _target);
+        emit DataPropertyAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+        return datapropertyassertion_storage.retrieveDataPropertyAssertion(_cid);
+    }
+
+    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
+        bytes memory _cid = negativedatapropertyassertion_storage.storeNegativeDataPropertyAssertion(_annotations, _property, _subject, _target);
+        emit NegativeDataPropertyAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+        return negativedatapropertyassertion_storage.retrieveNegativeDataPropertyAssertion(_cid);
+    }
+
+}
+

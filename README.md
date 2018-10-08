@@ -31,7 +31,8 @@ In order to update to a newer version of `ontology.proto` you need to do the fol
 
 - Pull in the new `ontology.proto`
 - Rewrite v3 protobuf to v2 protobuf (by hand)
-- Run script to merge contracts (*TODO*) (requires [solpb][solpb-github])
+- Use `solpb` to create `pb.sol` (requires [solpb][solpb-github])
+- Remove `library pb` section from `pb.sol`
 
 ## Contributing & Contact
 

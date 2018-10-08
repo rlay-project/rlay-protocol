@@ -45,7 +45,8 @@ contract PropositionLedger {
         EIP20Interface tokenContract = EIP20Interface(tokenContractAddr);
         IPropositionStorage propositionStorageContract = IPropositionStorage(propositionStorageContractAddr);
 
-        require(propositionStorageContract.isPropositionStored(propositionCid));
+        // TODO
+        // require(propositionStorageContract.isPropositionStored(propositionCid));
         require(tokenContract.allowance(msg.sender, this) >= amount);
         require(tokenContract.balanceOf(msg.sender) >= amount);
 
