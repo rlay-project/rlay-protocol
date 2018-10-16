@@ -1,10 +1,13 @@
 {
-  "name": "rlay-protocol",
+  "name": "@rlay/protocol",
   "version": "0.3.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "rlay-deploy-contracts": "./bin/rlay-deploy-contracts.js"
+  },
   "scripts": {
-    "postinstall": "node_modules/.bin/truffle install",
+    "postinstall": "node_modules/.bin/truffle install || true",
     "build": "node_modules/.bin/truffle compile",
     "deploy": "node_modules/.bin/truffle migrate --reset",
     "testnet": "node_modules/.bin/ganache-cli --seed 1234",
