@@ -1,0 +1,27 @@
+[package]
+name = "pwasm-tutorial-contract"
+version = "0.1.0"
+authors = ["Alexey Frolov <alexey@parity.io>"]
+
+[dependencies]
+pwasm-std = "0.10"
+pwasm-ethereum = "0.6"
+pwasm-abi = { git = "https://github.com/paritytech/pwasm-abi", rev = "16b1b10e1aac460ba63e5a14b09325e166c28a2b" }
+pwasm-abi-derive = { git = "https://github.com/paritytech/pwasm-abi", rev = "16b1b10e1aac460ba63e5a14b09325e166c28a2b" }
+tiny-keccak = "1.4.2"
+rlay_ontology = { path = "/Users/hobofan/rlay/rlay-ontology/rlay_ontology", default-features = false, features = ["pwasm"] }
+
+[dev-dependencies.pwasm-test]
+git = "https://github.com/paritytech/pwasm-test"
+default-features = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+std = ["pwasm-std/std", "pwasm-ethereum/std", "pwasm-test/std"]
+
+[profile.release]
+panic = "abort"
+lto = true
+opt-level = "z"
