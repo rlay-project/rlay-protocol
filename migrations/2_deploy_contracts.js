@@ -28,7 +28,9 @@ var pbLibraries = [
   "ObjectPropertyAssertion",
   "NegativeObjectPropertyAssertion",
   "DataPropertyAssertion",
-  "NegativeDataPropertyAssertion"
+  "NegativeDataPropertyAssertion",
+  "AnnotationAssertion",
+  "NegativeAnnotationAssertion"
 ];
 
 var solLibraries = pbLibraries.map(n => artifacts.require(`${n}Storage`));

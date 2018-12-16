@@ -26,9 +26,9 @@ interface IObjectUnionOfStorage {
 }
 
 interface IObjectComplementOfStorage {
-    function storeObjectComplementOf(bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) public returns (bytes);
+    function storeObjectComplementOf(bytes _complementOf, bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes);
 
-    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression);
+    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes _complementOf, bytes[] _annotations, bytes[] _superClassExpression);
 
 }
 
@@ -159,9 +159,9 @@ interface IAnnotationStorage {
 }
 
 interface IIndividualStorage {
-    function storeIndividual(bytes[] _annotations) public returns (bytes);
+    function storeIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions, bytes[] _object_property_assertions, bytes[] _negative_object_property_assertions, bytes[] _data_property_assertions, bytes[] _negative_data_property_assertions) public returns (bytes);
 
-    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations);
+    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions, bytes[] _object_property_assertions, bytes[] _negative_object_property_assertions, bytes[] _data_property_assertions, bytes[] _negative_data_property_assertions);
 
 }
 
@@ -173,44 +173,58 @@ interface IAnnotationPropertyStorage {
 }
 
 interface IClassAssertionStorage {
-    function storeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes);
+    function storeClassAssertion(bytes[] _annotations, bytes _subject, bytes _class) public returns (bytes);
 
-    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject);
+    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _class);
 
 }
 
 interface INegativeClassAssertionStorage {
-    function storeNegativeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes);
+    function storeNegativeClassAssertion(bytes[] _annotations, bytes _subject, bytes _class) public returns (bytes);
 
-    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject);
+    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _class);
 
 }
 
 interface IObjectPropertyAssertionStorage {
-    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes);
+    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes);
 
-    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target);
+    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target);
 
 }
 
 interface INegativeObjectPropertyAssertionStorage {
-    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes);
+    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes);
 
-    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target);
+    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target);
 
 }
 
 interface IDataPropertyAssertionStorage {
-    function storeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes);
+    function storeDataPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes);
 
-    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target);
+    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target);
 
 }
 
 interface INegativeDataPropertyAssertionStorage {
-    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes);
+    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes);
 
-    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target);
+    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target);
+
+}
+
+interface IAnnotationAssertionStorage {
+    function storeAnnotationAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _value) public returns (bytes);
+
+    function retrieveAnnotationAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _value);
+
+}
+
+interface INegativeAnnotationAssertionStorage {
+    function storeNegativeAnnotationAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _value) public returns (bytes);
+
+    function retrieveNegativeAnnotationAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _value);
 
 }
 
@@ -335,8 +349,8 @@ contract ObjectComplementOfStorage is IObjectComplementOfStorage {
 
     event ObjectComplementOfStored(bytes _cid);
 
-    function storeObjectComplementOf(bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) public returns (bytes) {
-        ObjectComplementOfCodec.ObjectComplementOf memory _instance = ObjectComplementOfCodec.ObjectComplementOf(_annotations, _complementOf, _superClassExpression);
+    function storeObjectComplementOf(bytes _complementOf, bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        ObjectComplementOfCodec.ObjectComplementOf memory _instance = ObjectComplementOfCodec.ObjectComplementOf(_complementOf, _annotations, _superClassExpression);
         bytes32 hash = hashObjectComplementOf(_instance);
 
         objectcomplementof_hash_map[hash] = _instance;
@@ -346,10 +360,10 @@ contract ObjectComplementOfStorage is IObjectComplementOfStorage {
         return _cid;
     }
 
-    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) {
+    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes _complementOf, bytes[] _annotations, bytes[] _superClassExpression) {
         bytes32 _hash = cid.unwrapCid(_cid);
         ObjectComplementOfCodec.ObjectComplementOf memory _instance = objectcomplementof_hash_map[_hash];
-        return (_instance.annotations, _instance.complementOf, _instance.superClassExpression);
+        return (_instance.complementOf, _instance.annotations, _instance.superClassExpression);
     }
 
     function hashObjectComplementOf(ObjectComplementOfCodec.ObjectComplementOf memory _instance) public view returns (bytes32) {
@@ -359,8 +373,8 @@ contract ObjectComplementOfStorage is IObjectComplementOfStorage {
         return hash;
     }
 
-    function calculateCidObjectComplementOf(bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) public view returns (bytes _cid) {
-        ObjectComplementOfCodec.ObjectComplementOf memory _instance = ObjectComplementOfCodec.ObjectComplementOf(_annotations, _complementOf, _superClassExpression);
+    function calculateCidObjectComplementOf(bytes _complementOf, bytes[] _annotations, bytes[] _superClassExpression) public view returns (bytes _cid) {
+        ObjectComplementOfCodec.ObjectComplementOf memory _instance = ObjectComplementOfCodec.ObjectComplementOf(_complementOf, _annotations, _superClassExpression);
         bytes32 _hash = hashObjectComplementOf(_instance);
         return cid.wrapInCid(cidPrefixObjectComplementOf, _hash);
     }
@@ -1057,8 +1071,8 @@ contract IndividualStorage is IIndividualStorage {
 
     event IndividualStored(bytes _cid);
 
-    function storeIndividual(bytes[] _annotations) public returns (bytes) {
-        IndividualCodec.Individual memory _instance = IndividualCodec.Individual(_annotations);
+    function storeIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions, bytes[] _object_property_assertions, bytes[] _negative_object_property_assertions, bytes[] _data_property_assertions, bytes[] _negative_data_property_assertions) public returns (bytes) {
+        IndividualCodec.Individual memory _instance = IndividualCodec.Individual(_annotations, _class_assertions, _negative_class_assertions, _object_property_assertions, _negative_object_property_assertions, _data_property_assertions, _negative_data_property_assertions);
         bytes32 hash = hashIndividual(_instance);
 
         individual_hash_map[hash] = _instance;
@@ -1068,10 +1082,10 @@ contract IndividualStorage is IIndividualStorage {
         return _cid;
     }
 
-    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations) {
+    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions, bytes[] _object_property_assertions, bytes[] _negative_object_property_assertions, bytes[] _data_property_assertions, bytes[] _negative_data_property_assertions) {
         bytes32 _hash = cid.unwrapCid(_cid);
         IndividualCodec.Individual memory _instance = individual_hash_map[_hash];
-        return (_instance.annotations);
+        return (_instance.annotations, _instance.class_assertions, _instance.negative_class_assertions, _instance.object_property_assertions, _instance.negative_object_property_assertions, _instance.data_property_assertions, _instance.negative_data_property_assertions);
     }
 
     function hashIndividual(IndividualCodec.Individual memory _instance) public view returns (bytes32) {
@@ -1081,8 +1095,8 @@ contract IndividualStorage is IIndividualStorage {
         return hash;
     }
 
-    function calculateCidIndividual(bytes[] _annotations) public view returns (bytes _cid) {
-        IndividualCodec.Individual memory _instance = IndividualCodec.Individual(_annotations);
+    function calculateCidIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions, bytes[] _object_property_assertions, bytes[] _negative_object_property_assertions, bytes[] _data_property_assertions, bytes[] _negative_data_property_assertions) public view returns (bytes _cid) {
+        IndividualCodec.Individual memory _instance = IndividualCodec.Individual(_annotations, _class_assertions, _negative_class_assertions, _object_property_assertions, _negative_object_property_assertions, _data_property_assertions, _negative_data_property_assertions);
         bytes32 _hash = hashIndividual(_instance);
         return cid.wrapInCid(cidPrefixIndividual, _hash);
     }
@@ -1133,8 +1147,8 @@ contract ClassAssertionStorage is IClassAssertionStorage {
 
     event ClassAssertionStored(bytes _cid);
 
-    function storeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes) {
-        ClassAssertionCodec.ClassAssertion memory _instance = ClassAssertionCodec.ClassAssertion(_annotations, _class, _subject);
+    function storeClassAssertion(bytes[] _annotations, bytes _subject, bytes _class) public returns (bytes) {
+        ClassAssertionCodec.ClassAssertion memory _instance = ClassAssertionCodec.ClassAssertion(_annotations, _subject, _class);
         bytes32 hash = hashClassAssertion(_instance);
 
         classassertion_hash_map[hash] = _instance;
@@ -1144,10 +1158,10 @@ contract ClassAssertionStorage is IClassAssertionStorage {
         return _cid;
     }
 
-    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject) {
+    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _class) {
         bytes32 _hash = cid.unwrapCid(_cid);
         ClassAssertionCodec.ClassAssertion memory _instance = classassertion_hash_map[_hash];
-        return (_instance.annotations, _instance.class, _instance.subject);
+        return (_instance.annotations, _instance.subject, _instance.class);
     }
 
     function hashClassAssertion(ClassAssertionCodec.ClassAssertion memory _instance) public view returns (bytes32) {
@@ -1157,8 +1171,8 @@ contract ClassAssertionStorage is IClassAssertionStorage {
         return hash;
     }
 
-    function calculateCidClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public view returns (bytes _cid) {
-        ClassAssertionCodec.ClassAssertion memory _instance = ClassAssertionCodec.ClassAssertion(_annotations, _class, _subject);
+    function calculateCidClassAssertion(bytes[] _annotations, bytes _subject, bytes _class) public view returns (bytes _cid) {
+        ClassAssertionCodec.ClassAssertion memory _instance = ClassAssertionCodec.ClassAssertion(_annotations, _subject, _class);
         bytes32 _hash = hashClassAssertion(_instance);
         return cid.wrapInCid(cidPrefixClassAssertion, _hash);
     }
@@ -1171,8 +1185,8 @@ contract NegativeClassAssertionStorage is INegativeClassAssertionStorage {
 
     event NegativeClassAssertionStored(bytes _cid);
 
-    function storeNegativeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes) {
-        NegativeClassAssertionCodec.NegativeClassAssertion memory _instance = NegativeClassAssertionCodec.NegativeClassAssertion(_annotations, _class, _subject);
+    function storeNegativeClassAssertion(bytes[] _annotations, bytes _subject, bytes _class) public returns (bytes) {
+        NegativeClassAssertionCodec.NegativeClassAssertion memory _instance = NegativeClassAssertionCodec.NegativeClassAssertion(_annotations, _subject, _class);
         bytes32 hash = hashNegativeClassAssertion(_instance);
 
         negativeclassassertion_hash_map[hash] = _instance;
@@ -1182,10 +1196,10 @@ contract NegativeClassAssertionStorage is INegativeClassAssertionStorage {
         return _cid;
     }
 
-    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject) {
+    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _class) {
         bytes32 _hash = cid.unwrapCid(_cid);
         NegativeClassAssertionCodec.NegativeClassAssertion memory _instance = negativeclassassertion_hash_map[_hash];
-        return (_instance.annotations, _instance.class, _instance.subject);
+        return (_instance.annotations, _instance.subject, _instance.class);
     }
 
     function hashNegativeClassAssertion(NegativeClassAssertionCodec.NegativeClassAssertion memory _instance) public view returns (bytes32) {
@@ -1195,8 +1209,8 @@ contract NegativeClassAssertionStorage is INegativeClassAssertionStorage {
         return hash;
     }
 
-    function calculateCidNegativeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public view returns (bytes _cid) {
-        NegativeClassAssertionCodec.NegativeClassAssertion memory _instance = NegativeClassAssertionCodec.NegativeClassAssertion(_annotations, _class, _subject);
+    function calculateCidNegativeClassAssertion(bytes[] _annotations, bytes _subject, bytes _class) public view returns (bytes _cid) {
+        NegativeClassAssertionCodec.NegativeClassAssertion memory _instance = NegativeClassAssertionCodec.NegativeClassAssertion(_annotations, _subject, _class);
         bytes32 _hash = hashNegativeClassAssertion(_instance);
         return cid.wrapInCid(cidPrefixNegativeClassAssertion, _hash);
     }
@@ -1209,8 +1223,8 @@ contract ObjectPropertyAssertionStorage is IObjectPropertyAssertionStorage {
 
     event ObjectPropertyAssertionStored(bytes _cid);
 
-    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
-        ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance = ObjectPropertyAssertionCodec.ObjectPropertyAssertion(_annotations, _property, _subject, _target);
+    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes) {
+        ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance = ObjectPropertyAssertionCodec.ObjectPropertyAssertion(_annotations, _subject, _property, _target);
         bytes32 hash = hashObjectPropertyAssertion(_instance);
 
         objectpropertyassertion_hash_map[hash] = _instance;
@@ -1220,10 +1234,10 @@ contract ObjectPropertyAssertionStorage is IObjectPropertyAssertionStorage {
         return _cid;
     }
 
-    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target) {
         bytes32 _hash = cid.unwrapCid(_cid);
         ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance = objectpropertyassertion_hash_map[_hash];
-        return (_instance.annotations, _instance.property, _instance.subject, _instance.target);
+        return (_instance.annotations, _instance.subject, _instance.property, _instance.target);
     }
 
     function hashObjectPropertyAssertion(ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance) public view returns (bytes32) {
@@ -1233,8 +1247,8 @@ contract ObjectPropertyAssertionStorage is IObjectPropertyAssertionStorage {
         return hash;
     }
 
-    function calculateCidObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public view returns (bytes _cid) {
-        ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance = ObjectPropertyAssertionCodec.ObjectPropertyAssertion(_annotations, _property, _subject, _target);
+    function calculateCidObjectPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public view returns (bytes _cid) {
+        ObjectPropertyAssertionCodec.ObjectPropertyAssertion memory _instance = ObjectPropertyAssertionCodec.ObjectPropertyAssertion(_annotations, _subject, _property, _target);
         bytes32 _hash = hashObjectPropertyAssertion(_instance);
         return cid.wrapInCid(cidPrefixObjectPropertyAssertion, _hash);
     }
@@ -1247,8 +1261,8 @@ contract NegativeObjectPropertyAssertionStorage is INegativeObjectPropertyAssert
 
     event NegativeObjectPropertyAssertionStored(bytes _cid);
 
-    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
-        NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance = NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion(_annotations, _property, _subject, _target);
+    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes) {
+        NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance = NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion(_annotations, _subject, _property, _target);
         bytes32 hash = hashNegativeObjectPropertyAssertion(_instance);
 
         negativeobjectpropertyassertion_hash_map[hash] = _instance;
@@ -1258,10 +1272,10 @@ contract NegativeObjectPropertyAssertionStorage is INegativeObjectPropertyAssert
         return _cid;
     }
 
-    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target) {
         bytes32 _hash = cid.unwrapCid(_cid);
         NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance = negativeobjectpropertyassertion_hash_map[_hash];
-        return (_instance.annotations, _instance.property, _instance.subject, _instance.target);
+        return (_instance.annotations, _instance.subject, _instance.property, _instance.target);
     }
 
     function hashNegativeObjectPropertyAssertion(NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance) public view returns (bytes32) {
@@ -1271,8 +1285,8 @@ contract NegativeObjectPropertyAssertionStorage is INegativeObjectPropertyAssert
         return hash;
     }
 
-    function calculateCidNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public view returns (bytes _cid) {
-        NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance = NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion(_annotations, _property, _subject, _target);
+    function calculateCidNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public view returns (bytes _cid) {
+        NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion memory _instance = NegativeObjectPropertyAssertionCodec.NegativeObjectPropertyAssertion(_annotations, _subject, _property, _target);
         bytes32 _hash = hashNegativeObjectPropertyAssertion(_instance);
         return cid.wrapInCid(cidPrefixNegativeObjectPropertyAssertion, _hash);
     }
@@ -1285,8 +1299,8 @@ contract DataPropertyAssertionStorage is IDataPropertyAssertionStorage {
 
     event DataPropertyAssertionStored(bytes _cid);
 
-    function storeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
-        DataPropertyAssertionCodec.DataPropertyAssertion memory _instance = DataPropertyAssertionCodec.DataPropertyAssertion(_annotations, _property, _subject, _target);
+    function storeDataPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes) {
+        DataPropertyAssertionCodec.DataPropertyAssertion memory _instance = DataPropertyAssertionCodec.DataPropertyAssertion(_annotations, _subject, _property, _target);
         bytes32 hash = hashDataPropertyAssertion(_instance);
 
         datapropertyassertion_hash_map[hash] = _instance;
@@ -1296,10 +1310,10 @@ contract DataPropertyAssertionStorage is IDataPropertyAssertionStorage {
         return _cid;
     }
 
-    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target) {
         bytes32 _hash = cid.unwrapCid(_cid);
         DataPropertyAssertionCodec.DataPropertyAssertion memory _instance = datapropertyassertion_hash_map[_hash];
-        return (_instance.annotations, _instance.property, _instance.subject, _instance.target);
+        return (_instance.annotations, _instance.subject, _instance.property, _instance.target);
     }
 
     function hashDataPropertyAssertion(DataPropertyAssertionCodec.DataPropertyAssertion memory _instance) public view returns (bytes32) {
@@ -1309,8 +1323,8 @@ contract DataPropertyAssertionStorage is IDataPropertyAssertionStorage {
         return hash;
     }
 
-    function calculateCidDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public view returns (bytes _cid) {
-        DataPropertyAssertionCodec.DataPropertyAssertion memory _instance = DataPropertyAssertionCodec.DataPropertyAssertion(_annotations, _property, _subject, _target);
+    function calculateCidDataPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public view returns (bytes _cid) {
+        DataPropertyAssertionCodec.DataPropertyAssertion memory _instance = DataPropertyAssertionCodec.DataPropertyAssertion(_annotations, _subject, _property, _target);
         bytes32 _hash = hashDataPropertyAssertion(_instance);
         return cid.wrapInCid(cidPrefixDataPropertyAssertion, _hash);
     }
@@ -1323,8 +1337,8 @@ contract NegativeDataPropertyAssertionStorage is INegativeDataPropertyAssertionS
 
     event NegativeDataPropertyAssertionStored(bytes _cid);
 
-    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
-        NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance = NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion(_annotations, _property, _subject, _target);
+    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes) {
+        NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance = NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion(_annotations, _subject, _property, _target);
         bytes32 hash = hashNegativeDataPropertyAssertion(_instance);
 
         negativedatapropertyassertion_hash_map[hash] = _instance;
@@ -1334,10 +1348,10 @@ contract NegativeDataPropertyAssertionStorage is INegativeDataPropertyAssertionS
         return _cid;
     }
 
-    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target) {
         bytes32 _hash = cid.unwrapCid(_cid);
         NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance = negativedatapropertyassertion_hash_map[_hash];
-        return (_instance.annotations, _instance.property, _instance.subject, _instance.target);
+        return (_instance.annotations, _instance.subject, _instance.property, _instance.target);
     }
 
     function hashNegativeDataPropertyAssertion(NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance) public view returns (bytes32) {
@@ -1347,14 +1361,90 @@ contract NegativeDataPropertyAssertionStorage is INegativeDataPropertyAssertionS
         return hash;
     }
 
-    function calculateCidNegativeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public view returns (bytes _cid) {
-        NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance = NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion(_annotations, _property, _subject, _target);
+    function calculateCidNegativeDataPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public view returns (bytes _cid) {
+        NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion memory _instance = NegativeDataPropertyAssertionCodec.NegativeDataPropertyAssertion(_annotations, _subject, _property, _target);
         bytes32 _hash = hashNegativeDataPropertyAssertion(_instance);
         return cid.wrapInCid(cidPrefixNegativeDataPropertyAssertion, _hash);
     }
 }
 
-contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObjectUnionOfStorage, IObjectComplementOfStorage, IObjectOneOfStorage, IObjectSomeValuesFromStorage, IObjectAllValuesFromStorage, IObjectHasValueStorage, IObjectHasSelfStorage, IObjectMinCardinalityStorage, IObjectMaxCardinalityStorage, IObjectExactCardinalityStorage, IDataSomeValuesFromStorage, IDataAllValuesFromStorage, IDataHasValueStorage, IDataMinCardinalityStorage, IDataMaxCardinalityStorage, IDataExactCardinalityStorage, IObjectPropertyStorage, IInverseObjectPropertyStorage, IDataPropertyStorage, IAnnotationStorage, IIndividualStorage, IAnnotationPropertyStorage, IClassAssertionStorage, INegativeClassAssertionStorage, IObjectPropertyAssertionStorage, INegativeObjectPropertyAssertionStorage, IDataPropertyAssertionStorage, INegativeDataPropertyAssertionStorage{
+contract AnnotationAssertionStorage is IAnnotationAssertionStorage {
+    mapping (bytes32 => AnnotationAssertionCodec.AnnotationAssertion) private annotationassertion_hash_map;
+
+    bytes6 constant cidPrefixAnnotationAssertion = 0x019e80031b20;
+
+    event AnnotationAssertionStored(bytes _cid);
+
+    function storeAnnotationAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _value) public returns (bytes) {
+        AnnotationAssertionCodec.AnnotationAssertion memory _instance = AnnotationAssertionCodec.AnnotationAssertion(_annotations, _subject, _property, _value);
+        bytes32 hash = hashAnnotationAssertion(_instance);
+
+        annotationassertion_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixAnnotationAssertion, hash);
+        emit AnnotationAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveAnnotationAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _value) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        AnnotationAssertionCodec.AnnotationAssertion memory _instance = annotationassertion_hash_map[_hash];
+        return (_instance.annotations, _instance.subject, _instance.property, _instance.value);
+    }
+
+    function hashAnnotationAssertion(AnnotationAssertionCodec.AnnotationAssertion memory _instance) public view returns (bytes32) {
+        bytes memory enc = AnnotationAssertionCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidAnnotationAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _value) public view returns (bytes _cid) {
+        AnnotationAssertionCodec.AnnotationAssertion memory _instance = AnnotationAssertionCodec.AnnotationAssertion(_annotations, _subject, _property, _value);
+        bytes32 _hash = hashAnnotationAssertion(_instance);
+        return cid.wrapInCid(cidPrefixAnnotationAssertion, _hash);
+    }
+}
+
+contract NegativeAnnotationAssertionStorage is INegativeAnnotationAssertionStorage {
+    mapping (bytes32 => NegativeAnnotationAssertionCodec.NegativeAnnotationAssertion) private negativeannotationassertion_hash_map;
+
+    bytes6 constant cidPrefixNegativeAnnotationAssertion = 0x019f80031b20;
+
+    event NegativeAnnotationAssertionStored(bytes _cid);
+
+    function storeNegativeAnnotationAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _value) public returns (bytes) {
+        NegativeAnnotationAssertionCodec.NegativeAnnotationAssertion memory _instance = NegativeAnnotationAssertionCodec.NegativeAnnotationAssertion(_annotations, _subject, _property, _value);
+        bytes32 hash = hashNegativeAnnotationAssertion(_instance);
+
+        negativeannotationassertion_hash_map[hash] = _instance;
+
+        bytes memory _cid = cid.wrapInCid(cidPrefixNegativeAnnotationAssertion, hash);
+        emit NegativeAnnotationAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveNegativeAnnotationAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _value) {
+        bytes32 _hash = cid.unwrapCid(_cid);
+        NegativeAnnotationAssertionCodec.NegativeAnnotationAssertion memory _instance = negativeannotationassertion_hash_map[_hash];
+        return (_instance.annotations, _instance.subject, _instance.property, _instance.value);
+    }
+
+    function hashNegativeAnnotationAssertion(NegativeAnnotationAssertionCodec.NegativeAnnotationAssertion memory _instance) public view returns (bytes32) {
+        bytes memory enc = NegativeAnnotationAssertionCodec.encode(_instance);
+        bytes32 hash = keccak256(enc);
+
+        return hash;
+    }
+
+    function calculateCidNegativeAnnotationAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _value) public view returns (bytes _cid) {
+        NegativeAnnotationAssertionCodec.NegativeAnnotationAssertion memory _instance = NegativeAnnotationAssertionCodec.NegativeAnnotationAssertion(_annotations, _subject, _property, _value);
+        bytes32 _hash = hashNegativeAnnotationAssertion(_instance);
+        return cid.wrapInCid(cidPrefixNegativeAnnotationAssertion, _hash);
+    }
+}
+
+contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObjectUnionOfStorage, IObjectComplementOfStorage, IObjectOneOfStorage, IObjectSomeValuesFromStorage, IObjectAllValuesFromStorage, IObjectHasValueStorage, IObjectHasSelfStorage, IObjectMinCardinalityStorage, IObjectMaxCardinalityStorage, IObjectExactCardinalityStorage, IDataSomeValuesFromStorage, IDataAllValuesFromStorage, IDataHasValueStorage, IDataMinCardinalityStorage, IDataMaxCardinalityStorage, IDataExactCardinalityStorage, IObjectPropertyStorage, IInverseObjectPropertyStorage, IDataPropertyStorage, IAnnotationStorage, IIndividualStorage, IAnnotationPropertyStorage, IClassAssertionStorage, INegativeClassAssertionStorage, IObjectPropertyAssertionStorage, INegativeObjectPropertyAssertionStorage, IDataPropertyAssertionStorage, INegativeDataPropertyAssertionStorage, IAnnotationAssertionStorage, INegativeAnnotationAssertionStorage{
     IClassStorage public class_storage;
     IObjectIntersectionOfStorage public objectintersectionof_storage;
     IObjectUnionOfStorage public objectunionof_storage;
@@ -1385,6 +1475,8 @@ contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObject
     INegativeObjectPropertyAssertionStorage public negativeobjectpropertyassertion_storage;
     IDataPropertyAssertionStorage public datapropertyassertion_storage;
     INegativeDataPropertyAssertionStorage public negativedatapropertyassertion_storage;
+    IAnnotationAssertionStorage public annotationassertion_storage;
+    INegativeAnnotationAssertionStorage public negativeannotationassertion_storage;
 
     event ClassStored(bytes _cid);
     event ObjectIntersectionOfStored(bytes _cid);
@@ -1416,6 +1508,8 @@ contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObject
     event NegativeObjectPropertyAssertionStored(bytes _cid);
     event DataPropertyAssertionStored(bytes _cid);
     event NegativeDataPropertyAssertionStored(bytes _cid);
+    event AnnotationAssertionStored(bytes _cid);
+    event NegativeAnnotationAssertionStored(bytes _cid);
 
     constructor(address[] _storage_delegate_addrs) {
         class_storage = IClassStorage(_storage_delegate_addrs[0]);
@@ -1448,6 +1542,8 @@ contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObject
         negativeobjectpropertyassertion_storage = INegativeObjectPropertyAssertionStorage(_storage_delegate_addrs[27]);
         datapropertyassertion_storage = IDataPropertyAssertionStorage(_storage_delegate_addrs[28]);
         negativedatapropertyassertion_storage = INegativeDataPropertyAssertionStorage(_storage_delegate_addrs[29]);
+        annotationassertion_storage = IAnnotationAssertionStorage(_storage_delegate_addrs[30]);
+        negativeannotationassertion_storage = INegativeAnnotationAssertionStorage(_storage_delegate_addrs[31]);
     }
 
     function storeClass(bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
@@ -1480,13 +1576,13 @@ contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObject
         return objectunionof_storage.retrieveObjectUnionOf(_cid);
     }
 
-    function storeObjectComplementOf(bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) public returns (bytes) {
-        bytes memory _cid = objectcomplementof_storage.storeObjectComplementOf(_annotations, _complementOf, _superClassExpression);
+    function storeObjectComplementOf(bytes _complementOf, bytes[] _annotations, bytes[] _superClassExpression) public returns (bytes) {
+        bytes memory _cid = objectcomplementof_storage.storeObjectComplementOf(_complementOf, _annotations, _superClassExpression);
         emit ObjectComplementOfStored(_cid);
         return _cid;
     }
 
-    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes[] _annotations, bytes _complementOf, bytes[] _superClassExpression) {
+    function retrieveObjectComplementOf(bytes _cid) external view returns (bytes _complementOf, bytes[] _annotations, bytes[] _superClassExpression) {
         return objectcomplementof_storage.retrieveObjectComplementOf(_cid);
     }
 
@@ -1670,13 +1766,13 @@ contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObject
         return annotation_storage.retrieveAnnotation(_cid);
     }
 
-    function storeIndividual(bytes[] _annotations) public returns (bytes) {
-        bytes memory _cid = individual_storage.storeIndividual(_annotations);
+    function storeIndividual(bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions, bytes[] _object_property_assertions, bytes[] _negative_object_property_assertions, bytes[] _data_property_assertions, bytes[] _negative_data_property_assertions) public returns (bytes) {
+        bytes memory _cid = individual_storage.storeIndividual(_annotations, _class_assertions, _negative_class_assertions, _object_property_assertions, _negative_object_property_assertions, _data_property_assertions, _negative_data_property_assertions);
         emit IndividualStored(_cid);
         return _cid;
     }
 
-    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations) {
+    function retrieveIndividual(bytes _cid) external view returns (bytes[] _annotations, bytes[] _class_assertions, bytes[] _negative_class_assertions, bytes[] _object_property_assertions, bytes[] _negative_object_property_assertions, bytes[] _data_property_assertions, bytes[] _negative_data_property_assertions) {
         return individual_storage.retrieveIndividual(_cid);
     }
 
@@ -1690,64 +1786,84 @@ contract OntologyStorage is IClassStorage, IObjectIntersectionOfStorage, IObject
         return annotationproperty_storage.retrieveAnnotationProperty(_cid);
     }
 
-    function storeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes) {
-        bytes memory _cid = classassertion_storage.storeClassAssertion(_annotations, _class, _subject);
+    function storeClassAssertion(bytes[] _annotations, bytes _subject, bytes _class) public returns (bytes) {
+        bytes memory _cid = classassertion_storage.storeClassAssertion(_annotations, _subject, _class);
         emit ClassAssertionStored(_cid);
         return _cid;
     }
 
-    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject) {
+    function retrieveClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _class) {
         return classassertion_storage.retrieveClassAssertion(_cid);
     }
 
-    function storeNegativeClassAssertion(bytes[] _annotations, bytes _class, bytes _subject) public returns (bytes) {
-        bytes memory _cid = negativeclassassertion_storage.storeNegativeClassAssertion(_annotations, _class, _subject);
+    function storeNegativeClassAssertion(bytes[] _annotations, bytes _subject, bytes _class) public returns (bytes) {
+        bytes memory _cid = negativeclassassertion_storage.storeNegativeClassAssertion(_annotations, _subject, _class);
         emit NegativeClassAssertionStored(_cid);
         return _cid;
     }
 
-    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _class, bytes _subject) {
+    function retrieveNegativeClassAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _class) {
         return negativeclassassertion_storage.retrieveNegativeClassAssertion(_cid);
     }
 
-    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
-        bytes memory _cid = objectpropertyassertion_storage.storeObjectPropertyAssertion(_annotations, _property, _subject, _target);
+    function storeObjectPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes) {
+        bytes memory _cid = objectpropertyassertion_storage.storeObjectPropertyAssertion(_annotations, _subject, _property, _target);
         emit ObjectPropertyAssertionStored(_cid);
         return _cid;
     }
 
-    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+    function retrieveObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target) {
         return objectpropertyassertion_storage.retrieveObjectPropertyAssertion(_cid);
     }
 
-    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
-        bytes memory _cid = negativeobjectpropertyassertion_storage.storeNegativeObjectPropertyAssertion(_annotations, _property, _subject, _target);
+    function storeNegativeObjectPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes) {
+        bytes memory _cid = negativeobjectpropertyassertion_storage.storeNegativeObjectPropertyAssertion(_annotations, _subject, _property, _target);
         emit NegativeObjectPropertyAssertionStored(_cid);
         return _cid;
     }
 
-    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+    function retrieveNegativeObjectPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target) {
         return negativeobjectpropertyassertion_storage.retrieveNegativeObjectPropertyAssertion(_cid);
     }
 
-    function storeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
-        bytes memory _cid = datapropertyassertion_storage.storeDataPropertyAssertion(_annotations, _property, _subject, _target);
+    function storeDataPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes) {
+        bytes memory _cid = datapropertyassertion_storage.storeDataPropertyAssertion(_annotations, _subject, _property, _target);
         emit DataPropertyAssertionStored(_cid);
         return _cid;
     }
 
-    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+    function retrieveDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target) {
         return datapropertyassertion_storage.retrieveDataPropertyAssertion(_cid);
     }
 
-    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _property, bytes _subject, bytes _target) public returns (bytes) {
-        bytes memory _cid = negativedatapropertyassertion_storage.storeNegativeDataPropertyAssertion(_annotations, _property, _subject, _target);
+    function storeNegativeDataPropertyAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _target) public returns (bytes) {
+        bytes memory _cid = negativedatapropertyassertion_storage.storeNegativeDataPropertyAssertion(_annotations, _subject, _property, _target);
         emit NegativeDataPropertyAssertionStored(_cid);
         return _cid;
     }
 
-    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _property, bytes _subject, bytes _target) {
+    function retrieveNegativeDataPropertyAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _target) {
         return negativedatapropertyassertion_storage.retrieveNegativeDataPropertyAssertion(_cid);
+    }
+
+    function storeAnnotationAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _value) public returns (bytes) {
+        bytes memory _cid = annotationassertion_storage.storeAnnotationAssertion(_annotations, _subject, _property, _value);
+        emit AnnotationAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveAnnotationAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _value) {
+        return annotationassertion_storage.retrieveAnnotationAssertion(_cid);
+    }
+
+    function storeNegativeAnnotationAssertion(bytes[] _annotations, bytes _subject, bytes _property, bytes _value) public returns (bytes) {
+        bytes memory _cid = negativeannotationassertion_storage.storeNegativeAnnotationAssertion(_annotations, _subject, _property, _value);
+        emit NegativeAnnotationAssertionStored(_cid);
+        return _cid;
+    }
+
+    function retrieveNegativeAnnotationAssertion(bytes _cid) external view returns (bytes[] _annotations, bytes _subject, bytes _property, bytes _value) {
+        return negativeannotationassertion_storage.retrieveNegativeAnnotationAssertion(_cid);
     }
 
 }
